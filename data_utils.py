@@ -12,6 +12,34 @@ from tqdm.auto import tqdm
 
 from bpe_tokenizer import ByteBPETokenizerWrapper
 
+STIHI_RU_HUB_JSONL = "hf://datasets/IlyaGusev/stihi_ru/stihi_ru.jsonl.zst"
+
+
+def open_poetry_dataset(
+    dataset_name: str,
+    split: str,
+    streaming: bool,
+):
+    """Opens the poetry Hub table without deprecated dataset loading scripts.
+
+    Args:
+        dataset_name: Hub dataset id such as `IlyaGusev/stihi_ru`.
+        split: Requested split name.
+        streaming: When `True`, yields an iterable dataset.
+
+    Returns:
+        A `datasets.Dataset` or `IterableDataset` with a `text` column.
+    """
+
+    if dataset_name == "IlyaGusev/stihi_ru":
+        return load_dataset(
+            "json",
+            data_files=STIHI_RU_HUB_JSONL,
+            split="train",
+            streaming=streaming,
+        )
+    return load_dataset(dataset_name, split=split, streaming=streaming)
+
 
 def load_poetry_texts(
     dataset_name: str,
@@ -31,7 +59,7 @@ def load_poetry_texts(
         List of non-empty poem strings.
     """
 
-    ds = load_dataset(dataset_name, split=split)
+    ds = open_poetry_dataset(dataset_name, split=split, streaming=False)
     texts = [str(row["text"]).strip() for row in ds if str(row["text"]).strip()]
     if sample_fraction < 1.0:
         rng = np.random.default_rng(seed)
@@ -59,7 +87,7 @@ def iter_poetry_texts(
         Iterator over poem strings.
     """
 
-    ds = load_dataset(dataset_name, split=split, streaming=True)
+    ds = open_poetry_dataset(dataset_name, split=split, streaming=True)
     if sample_fraction >= 1.0:
         for row in ds:
             text = str(row["text"]).strip()

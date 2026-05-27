@@ -315,9 +315,9 @@ def author_pca(root: Path) -> None:
 
     from collections import defaultdict
 
-    from datasets import load_dataset
+    from data_utils import open_poetry_dataset
 
-    ds = load_dataset(train_cfg.dataset_name, split=train_cfg.dataset_split, streaming=True)
+    ds = open_poetry_dataset(train_cfg.dataset_name, train_cfg.dataset_split, streaming=True)
     author_to_texts: dict[str, list[str]] = defaultdict(list)
     author_counts: dict[str, int] = defaultdict(int)
 

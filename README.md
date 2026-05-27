@@ -57,7 +57,7 @@ Embed the histogram in this README locally like this once the PNG exists:
 
 ## ByteLevel BPE tokenizer
 
-Training reads the poetry stream once through `datasets.load_dataset(..., streaming=True)` and feeds the iterator into `tokenizer.train_from_iterator`. Settings live in `TokenizerTrainConfig` inside `configs.py`:
+Training reads the poetry stream from `hf://datasets/IlyaGusev/stihi_ru/stihi_ru.jsonl.zst` through the JSON builder with `streaming=True`, because Hub loading scripts are disabled in `datasets` 3.x. Install `zstandard` from `requirements.txt`. The iterator feeds `tokenizer.train_from_iterator`. Settings live in `TokenizerTrainConfig` inside `configs.py`:
 
 * vocabulary size **24 000**, including `[PAD]`, `[EOS]`, `[UNK]`
 * `min_frequency = 2` for merge retention
