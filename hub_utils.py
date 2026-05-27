@@ -4,9 +4,9 @@ import json
 import shutil
 from pathlib import Path
 
-from huggingface_hub import HfApi, upload_file, upload_folder
+from huggingface_hub import HfApi, hf_hub_download, upload_folder
 
-from pydantic_models import EnvSettings
+from pydantic_models import EnvSettings, ProjectPaths
 
 
 def publish_tokenizer(local_dir: Path, repo_id: str, token: str | None) -> None:
@@ -91,6 +91,65 @@ def publish_model_bundle(
         token=token,
         commit_message=commit_message,
     )
+
+
+def download_inference_artifacts(
+    root: Path,
+    model_repo_id: str | None = None,
+    tokenizer_repo_id: str | None = None,
+    token: str | None = None,
+) -> tuple[Path, Path]:
+    """Fetches `model.pt` and `tokenizer.json` into the local `artifacts/` tree.
+
+    Args:
+        root: Repository root.
+        model_repo_id: Hub model repository with the checkpoint bundle.
+        tokenizer_repo_id: Optional separate tokenizer repository.
+        token: Hugging Face token for private repositories.
+
+    Returns:
+        Tuple `(checkpoint_path, tokenizer_json_path)`.
+    """
+
+    env = load_env()
+    model_repo = model_repo_id if model_repo_id is not None else env.hf_model_repo
+    tokenizer_repo = tokenizer_repo_id if tokenizer_repo_id is not None else env.hf_tokenizer_repo
+    hub_token = token if token is not None else env.hf_token
+
+    paths = ProjectPaths(root)
+    paths.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    paths.tokenizer_dir.mkdir(parents=True, exist_ok=True)
+
+    checkpoint_path = paths.checkpoint_dir / "final.pt"
+    tokenizer_path = paths.tokenizer_dir / "tokenizer.json"
+
+    if not checkpoint_path.exists():
+        cached_ckpt = hf_hub_download(
+            repo_id=model_repo,
+            filename="model.pt",
+            token=hub_token,
+        )
+        shutil.copy2(cached_ckpt, checkpoint_path)
+
+    if not tokenizer_path.exists():
+        api = HfApi(token=hub_token)
+        model_files = api.list_repo_files(model_repo)
+        if "tokenizer/tokenizer.json" in model_files:
+            cached_tok = hf_hub_download(
+                repo_id=model_repo,
+                filename="tokenizer/tokenizer.json",
+                token=hub_token,
+            )
+            shutil.copy2(cached_tok, tokenizer_path)
+        else:
+            cached_tok = hf_hub_download(
+                repo_id=tokenizer_repo,
+                filename="tokenizer.json",
+                token=hub_token,
+            )
+            shutil.copy2(cached_tok, tokenizer_path)
+
+    return checkpoint_path, tokenizer_path
 
 
 def load_env() -> EnvSettings:

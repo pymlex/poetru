@@ -372,7 +372,47 @@ python scripts/sync_progress.py --root . --message "Manual snapshot"
 
 ## Inference from a local checkpoint
 
-First cell loads weights and tokenizer.
+Weights and the ByteLevel tokenizer live under `artifacts/`. That directory is not tracked in Git. After `train_model` the files are on disk locally. In Colab or another fresh clone, download them from the Hub first.
+
+```python
+from pathlib import Path
+from hub_utils import download_inference_artifacts
+
+root = Path(".").resolve()
+download_inference_artifacts(root)
+```
+
+Default repositories are `pymlex/poetru-75m` and `pymlex/poetru-75m-tokenizer`, overridable through `.env`. Public checkpoints need no token.
+
+### Colab
+
+```python
+!git clone https://github.com/pymlex/poetru.git
+%cd /content/poetru
+!pip install -q -r requirements.txt
+
+import sys
+sys.path.insert(0, "/content/poetru")
+
+from pathlib import Path
+import torch
+from hub_utils import download_inference_artifacts
+from bpe_tokenizer import ByteBPETokenizerWrapper
+from checkpoint_utils import load_checkpoint
+from configs import GenerationConfig
+from trainer import generate_poem
+
+root = Path("/content/poetru")
+download_inference_artifacts(root)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tokenizer = ByteBPETokenizerWrapper.from_file(root / "artifacts/tokenizer/tokenizer.json")
+model, _ = load_checkpoint(root / "artifacts/checkpoints/final.pt", device)
+model.eval()
+gen_cfg = GenerationConfig()
+```
+
+### Local or server with artefacts already on disk
 
 ```python
 from pathlib import Path
