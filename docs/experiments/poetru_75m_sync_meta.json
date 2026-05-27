@@ -1,0 +1,18 @@
+{
+  "step": 31000,
+  "epoch": 0.0,
+  "config": {
+    "vocab_size": 24000,
+    "max_seq_len": 512,
+    "hidden_dim": 640,
+    "intermediate_dim": 1728,
+    "n_layer": 12,
+    "n_head": 8,
+    "n_kv_head": 4,
+    "latent_dim": 640,
+    "dropout": 0.1,
+    "rope_theta": 10000.0
+  },
+  "source_checkpoint": "step_31000.pt",
+  "synced_at_utc": "2026-05-27T19:37:24.852431+00:00"
+}
