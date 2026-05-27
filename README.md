@@ -1,4 +1,4 @@
-# Poetru-25M
+# Poetru-75M
 
 ## Overview
 
@@ -6,11 +6,23 @@ This repository trains a compact Russian **causal language model** from scratch 
 
 The stack is **pure PyTorch**. It is not a Hugging Face `transformers` Trainer project. The tokenizer is **ByteLevel BPE** trained with the Rust-backed [`tokenizers`](https://github.com/huggingface/tokenizers) library. The backbone is a decoder-only Transformer with **RoPE**, **Grouped-Query Attention (GQA)** with **multi-head latent style KV compression (MLA-style)**, **SwiGLU** feed-forward layers, **RMSNorm**, **pre-norm residuals**, **dropout**, and **tied token embeddings**.
 
-Published checkpoints and artefacts are mirrored on the Hub under [`pymlex/poetru-25m`](https://huggingface.co/pymlex/poetru-25m). A parallel tokenizer-only upload target is configurable through `.env`.
+Published checkpoints and artefacts are mirrored on the Hub under [`pymlex/poetru-75m`](https://huggingface.co/pymlex/poetru-75m). A parallel tokenizer-only upload target is configurable through `.env`.
 
 ## Scaling rationale
 
-[Hoffmann et al., Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556), usually referred to as **Chinchilla**, reports approximate compute-optimal token counts on the order of **20 tokens per parameter** for the sizes they explored. Your poetry corpus yields on the rough order of **455 million ByteLevel-BPE tokens** when the tokenizer is saturated to 24 k merges. Seeing that volume about **2.5 times** during optimisation lands near **1.1 billion training tokens**, which is the same order of magnitude as **20 times 25 million parameters**. The width and depth in `configs.py` are therefore chosen so the **non-embedding parameter mass** sits near **25 million trainable parameters** while embeddings stay at **24 k times 384** with **weight tying** on the output projection.
+[Hoffmann et al., Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556), usually referred to as **Chinchilla**, reports approximate compute-optimal token counts on the order of **20 tokens per parameter** for the sizes they explored. The poetry corpus is on the rough order of **455 million ByteLevel-BPE tokens** across about **2 GB** of UTF-8 text when the tokenizer is saturated to 24 k merges. Training for **2.5 epochs** exposes the optimiser to on the rough order of
+
+$$
+T_{\mathrm{train}} \approx 2.5 \times 4.55 \times 10^{8} \approx 1.14 \times 10^{9}
+$$
+
+token positions counted on truncated prefixes up to **512** BPE tokens per poem. The Chinchilla compute-optimal parameter count for that budget is
+
+$$
+N_{\ast} \approx \frac{T_{\mathrm{train}}}{20} \approx 5.7 \times 10^{7}.
+$$
+
+`TransformerConfig` targets about **75 million** trainable parameters with **weight tying** on the output projection, which is roughly **30 percent** above $N_{\ast}$. That trades a slightly sub-Chinchilla tokens-per-parameter ratio near **15** for additional capacity on a corpus where validation cross-entropy was still falling through the **25M** run you logged near **53k** steps.
 
 The exact trainable count after you run `train_model` is written to `artifacts/metrics/model_param_count.json` so you can verify it on your machine without hand-waving.
 
@@ -75,20 +87,20 @@ The table lists static defaults except vocabulary which is overwritten at runtim
 | --- | ---: |
 | Vocabulary size | 24 000 |
 | Context length | 512 |
-| Hidden size | 384 |
-| Layers | 5 |
+| Hidden size | 640 |
+| Layers | 12 |
 | Query heads | 8 |
 | KV heads | 4 |
-| Head size | 48 |
-| MLA latent width | 384 |
-| SwiGLU intermediate | 1 024 |
+| Head size | 80 |
+| MLA latent width | 640 |
+| SwiGLU intermediate | 1 728 |
 | Dropout | 0.1 |
 | RoPE base theta | 10 000 |
 | Output head | linear, **tied** to input embeddings |
 
 ### Rotary position embeddings
 
-RoPE is applied to **queries and keys** after head projection. With head dimension 48, index pairs are rotated by position-dependent angles. Let `k` run from `0` to `d_h/2 - 1` with `d_h = 48`. Frequencies use the usual inverse-power schedule with base `theta_0 = 10 000`:
+RoPE is applied to **queries and keys** after head projection. With head dimension 80, index pairs are rotated by position-dependent angles. Let `k` run from `0` to `d_h/2 - 1` with `d_h = 80`. Frequencies use the usual inverse-power schedule with base `theta_0 = 10 000`:
 
 $$
 \theta_k = \theta_0^{-2k/d_h}
@@ -105,11 +117,11 @@ The same transform is applied to key rows before the scaled dot product.
 
 ### MLA-style KV path and GQA
 
-Each layer forms **queries** with eight heads. **Keys and values** are produced from a **shared low-rank bottleneck** `c_t = W_{\mathrm{down}} h_t` in `R^{384}`, then expanded with `W_{k}` and `W_{v}` into **four** physical KV heads. Each KV head is **repeated twice** with `torch.repeat_interleave` so every query head still receives a key and value slice. This matches the **GQA** pattern with **KV reuse** and **cache savings** at inference time.
+Each layer forms **queries** with eight heads. **Keys and values** are produced from a **shared low-rank bottleneck** `c_t = W_{\mathrm{down}} h_t` in `R^{640}`, then expanded with `W_{k}` and `W_{v}` into **four** physical KV heads. Each KV head is **repeated twice** with `torch.repeat_interleave` so every query head still receives a key and value slice. This matches the **GQA** pattern with **KV reuse** and **cache savings** at inference time.
 
 ### SwiGLU feed-forward
 
-Let `x` be a hidden vector at one time step. With intermediate width 1024, the block is
+Let `x` be a hidden vector at one time step. With intermediate width 1728, the block is
 
 $$
 \mathrm{SwiGLU}(x) = W_{\mathrm{down}}\bigl(\mathrm{SiLU}(W_{\mathrm{gate}} x) \odot W_{\mathrm{up}} x\bigr)
@@ -242,7 +254,7 @@ Populate `.env` with **only** secrets and Hub routing:
 | Variable | Meaning |
 | --- | --- |
 | `HF_TOKEN` | Hugging Face access token with write scope to your model namespace |
-| `HF_MODEL_REPO` | target model repo id, default `pymlex/poetru-25m` |
+| `HF_MODEL_REPO` | target model repo id, default `pymlex/poetru-75m` |
 | `HF_TOKENIZER_REPO` | tokenizer-only repo id used by `publish` |
 | `GITHUB_TOKEN` | optional for CI or scripted GitHub REST, not consumed by core training |
 

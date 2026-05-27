@@ -87,7 +87,7 @@ def publish_model_bundle(
         folder_path=str(publish_root),
         repo_type="model",
         token=token,
-        commit_message="Upload poetru-25m checkpoint and evaluation artefacts",
+        commit_message="Upload poetru-75m checkpoint and evaluation artefacts",
     )
 
 

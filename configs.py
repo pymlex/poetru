@@ -9,12 +9,12 @@ class TransformerConfig:
 
     vocab_size: int = 24000
     max_seq_len: int = 512
-    hidden_dim: int = 384
-    intermediate_dim: int = 1024
-    n_layer: int = 5
+    hidden_dim: int = 640
+    intermediate_dim: int = 1728
+    n_layer: int = 12
     n_head: int = 8
     n_kv_head: int = 4
-    latent_dim: int = 384
+    latent_dim: int = 640
     dropout: float = 0.1
     rope_theta: float = 10000.0
 

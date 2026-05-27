@@ -10,7 +10,7 @@ datasets:
   - IlyaGusev/stihi_ru
 ---
 
-# poetru-25m
+# poetru-75m
 
 Compact Russian poetry causal language model trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru) with ByteLevel BPE, RoPE, GQA, MLA-style latent KV compression, SwiGLU blocks, and tied embeddings.
 
@@ -18,21 +18,23 @@ Compact Russian poetry causal language model trained on [IlyaGusev/stihi_ru](htt
 
 | Field | Value |
 | --- | --- |
-| Parameters | ~24.5M trainable |
-| Layers | 5 |
-| Hidden size | 384 |
+| Parameters | ~74.9M trainable |
+| Layers | 12 |
+| Hidden size | 640 |
 | Heads | 8 query, 4 KV (GQA) |
-| MLA latent dim | 384 |
-| FFN | SwiGLU, intermediate 1024 |
+| MLA latent dim | 640 |
+| FFN | SwiGLU, intermediate 1728 |
 | Context | 512 tokens |
 | Vocabulary | 24000 ByteLevel BPE |
 | Positional encoding | RoPE base 10000 |
 
-Chinchilla-style scaling motivates on the rough order of 20 training tokens per parameter. The stihi_ru ByteLevel-BPE token count is on the rough order of 455 million. Training for 2.5 epochs yields a cumulative token budget on the rough order of the display line below for loss updates, consistent with compute-optimal training for roughly 25 million parameters.
+Chinchilla-style scaling uses on the rough order of 20 training tokens per parameter. The stihi_ru ByteLevel-BPE token count is on the rough order of 455 million. Training for 2.5 epochs yields a cumulative token budget on the rough order of
 
 $$
-1.14 \times 10^{9}
+T_{\mathrm{train}} \approx 1.14 \times 10^{9}
 $$
+
+which implies a compute-optimal parameter count near $5.7 \times 10^{7}$. This checkpoint uses about $7.5 \times 10^{7}$ trainable parameters, roughly 30 percent above that estimate.
 
 ## Watermarking
 

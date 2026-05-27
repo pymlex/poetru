@@ -20,8 +20,8 @@ class EnvSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     hf_token: str | None = Field(default=None, alias="HF_TOKEN")
-    hf_model_repo: str = Field(default="pymlex/poetru-25m", alias="HF_MODEL_REPO")
-    hf_tokenizer_repo: str = Field(default="pymlex/poetru-25m-tokenizer", alias="HF_TOKENIZER_REPO")
+    hf_model_repo: str = Field(default="pymlex/poetru-75m", alias="HF_MODEL_REPO")
+    hf_tokenizer_repo: str = Field(default="pymlex/poetru-75m-tokenizer", alias="HF_TOKENIZER_REPO")
     github_token: str | None = Field(default=None, alias="GITHUB_TOKEN")
 
 
