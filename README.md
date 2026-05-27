@@ -211,11 +211,9 @@ Constants are in `AuthorPCConfig` inside `configs.py`.
 | `main.py` | CLI entry for the full pipeline |
 | `pydantic_models.py` | `EnvSettings` for Hub tokens and repo ids |
 | `notebooks/poetru.ipynb` | theory markdown plus cells |
-| `env.example` | same bytes as `.env.example` for hosts that hide dot names |
-| `gitignore.template` | same bytes as `.gitignore` for the same reason |
+| `.env.example` | Hub and GitHub token template, copy to `.env` locally |
+| `.gitignore` | excludes secrets, checkpoints, caches |
 | `scripts/` | push helpers and standalone evaluation entry points |
-
-Dot-prefixed **`.env.example`** and **`.gitignore`** are the canonical paths Git tracks alongside the mirrors above.
 
 ## Cloning and dotfiles
 
@@ -225,8 +223,6 @@ Standard `git clone` from [github.com/pymlex/poetru](https://github.com/pymlex/p
 test -f .env.example && test -f .gitignore && echo "dotfiles present"
 ```
 
-The tree also ships **`env.example`** and **`gitignore.template`**. They mirror the dot-prefixed files byte for byte so downloads from file pickers that omit leading dots or mirror trees on the Hub stay aligned with this repository.
-
 ## Environment and secrets
 
 ```bash
@@ -235,8 +231,6 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
-
-If `.env.example` is not shown in your UI, copy `env.example` instead.
 
 Populate `.env` with **only** secrets and Hub routing:
 
