@@ -35,6 +35,7 @@ class TrainConfig:
     seed: int = 3407
     num_workers: int = 4
     log_every_steps: int = 50
+    eval_every_steps: int = 200
     checkpoint_every_steps: int = 2000
     eval_batches: int = 200
     adam_betas: tuple[float, float] = (0.9, 0.95)

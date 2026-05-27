@@ -143,9 +143,12 @@ If you train on a smaller machine, reduce `micro_batch_size`, `num_workers`, or 
 | Adam `betas` | `(0.9, 0.95)` |
 | Adam `eps` | `1e-8` |
 | precision | `bfloat16` autocast on CUDA when available |
-| log every | 50 steps |
+| log train loss every | 50 steps |
+| run full validation every | 200 steps |
 | checkpoint every | 2 000 steps |
-| validation batches per eval | 200 |
+| validation batches when eval runs | 200 |
+
+On rows where validation is skipped, `val_loss` in `train_history.csv` is blank. Align plots with optional ` Series.ffill() ` after `read_csv`.
 
 **GPU telemetry** from NVML is appended to `artifacts/logs/train_history.csv` as utilisation percent and used or total VRAM in megabytes on each logging row.
 

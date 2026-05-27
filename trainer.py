@@ -173,21 +173,42 @@ class Trainer:
 
             if global_step % self.cfg.log_every_steps == 0:
                 avg_loss = running_loss / max(self.cfg.log_every_steps, 1)
-                val_loss = self.evaluate(max_batches=self.cfg.eval_batches)
+                do_eval = global_step % self.cfg.eval_every_steps == 0
+                val_loss = (
+                    self.evaluate(max_batches=self.cfg.eval_batches)
+                    if do_eval
+                    else ""
+                )
                 lr = self.scheduler.get_last_lr()[0]
                 self._append_log(
                     [global_step, epoch, avg_loss, val_loss, lr, gpu_util, mem_used, mem_total]
                 )
-                pbar.set_postfix({"loss": f"{avg_loss:.4f}", "val": f"{val_loss:.4f}", "gpu": f"{gpu_util:.0f}%"})
+                postfix = {"loss": f"{avg_loss:.4f}", "gpu": f"{gpu_util:.0f}%"}
+                postfix["val"] = f"{float(val_loss):.4f}" if do_eval else "—"
+                pbar.set_postfix(postfix)
                 running_loss = 0.0
 
             if global_step % self.cfg.checkpoint_every_steps == 0:
                 ckpt = self.checkpoint_dir / f"step_{global_step}.pt"
                 save_checkpoint(ckpt, self.model, self.optimizer, self.scheduler, global_step, epoch)
 
-        final_ckpt = self.checkpoint_dir / "final.pt"
-        save_checkpoint(final_ckpt, self.model, self.optimizer, self.scheduler, global_step, epoch)
         pbar.close()
+
+        final_ckpt = self.checkpoint_dir / "final.pt"
+        val_final = self.evaluate(max_batches=self.cfg.eval_batches)
+        lr_final = self.scheduler.get_last_lr()[0]
+        gpu_util = 0.0
+        mem_used = 0
+        mem_total = 0
+        if self.gpu is not None:
+            snap = self.gpu.read()
+            gpu_util = snap.utilisation_percent
+            mem_used = snap.mem_used_bytes // (1024 * 1024)
+            mem_total = snap.mem_total_bytes // (1024 * 1024)
+        self._append_log(
+            [global_step, epoch, "", val_final, lr_final, gpu_util, mem_used, mem_total]
+        )
+        save_checkpoint(final_ckpt, self.model, self.optimizer, self.scheduler, global_step, epoch)
 
         if self.gpu is not None:
             self.gpu.close()
