@@ -56,6 +56,62 @@ def save_checkpoint(
     torch.save(payload, path)
 
 
+def latest_step_checkpoint(checkpoint_dir: Path) -> Path | None:
+    """Returns the newest `step_*.pt` file by step index.
+
+    Args:
+        checkpoint_dir: Directory where the trainer writes periodic checkpoints.
+
+    Returns:
+        Path to the highest-step checkpoint, or `None` when no step files exist.
+    """
+
+    step_paths = list(checkpoint_dir.glob("step_*.pt"))
+    if not step_paths:
+        return None
+    return max(step_paths, key=lambda path: int(path.stem.split("_", maxsplit=1)[1]))
+
+
+def resolve_publish_checkpoint(checkpoint_dir: Path) -> Path:
+    """Selects `final.pt` when present, otherwise the latest `step_*.pt`.
+
+    Args:
+        checkpoint_dir: Checkpoint root used by training.
+
+    Returns:
+        Path to the checkpoint file that should be published.
+
+    Raises:
+        FileNotFoundError: When no publishable checkpoint exists.
+    """
+
+    final_path = checkpoint_dir / "final.pt"
+    if final_path.exists():
+        return final_path
+    latest = latest_step_checkpoint(checkpoint_dir)
+    if latest is None:
+        raise FileNotFoundError(f"No checkpoint found under {checkpoint_dir}")
+    return latest
+
+
+def read_checkpoint_meta(path: Path) -> dict:
+    """Loads non-weight metadata from a training checkpoint on CPU.
+
+    Args:
+        path: Checkpoint `.pt` file.
+
+    Returns:
+        Dictionary with keys such as `step`, `epoch`, and `config`.
+    """
+
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    return {
+        "step": int(payload["step"]),
+        "epoch": float(payload["epoch"]),
+        "config": dict(payload["config"]),
+    }
+
+
 def load_checkpoint(path: Path, device: torch.device) -> tuple[PoetruCausalLM, dict]:
     """Restores a checkpoint into a freshly constructed model.
 

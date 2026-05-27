@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 from dataclasses import replace
 from pathlib import Path
 
@@ -409,21 +410,28 @@ def author_pca(root: Path) -> None:
 def publish_hub(root: Path) -> None:
     """Publishes tokenizer and trained model bundle to Hugging Face."""
 
+    from checkpoint_utils import read_checkpoint_meta, resolve_publish_checkpoint
     from hub_utils import load_env, publish_model_bundle, publish_tokenizer
 
     paths = ProjectPaths(root)
     env = load_env()
-    tcfg = TransformerConfig()
+    source_ckpt = resolve_publish_checkpoint(paths.checkpoint_dir)
+    meta = read_checkpoint_meta(source_ckpt)
+    staging_dir = paths.artifacts_dir / "hub_staging"
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    staged_ckpt = staging_dir / "model.pt"
+    shutil.copy2(source_ckpt, staged_ckpt)
 
     publish_tokenizer(paths.tokenizer_dir, env.hf_tokenizer_repo, env.hf_token)
     publish_model_bundle(
-        paths.checkpoint_dir / "final.pt",
-        tcfg.__dict__,
+        staged_ckpt,
+        meta["config"],
         paths.tokenizer_dir,
         paths.metrics_dir,
         paths.generated_poems_path,
         env.hf_model_repo,
         env.hf_token,
+        commit_message=f"Poetru-75M checkpoint step {meta['step']}",
     )
 
 

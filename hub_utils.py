@@ -40,6 +40,7 @@ def publish_model_bundle(
     generated_poems_path: Path,
     repo_id: str,
     token: str | None,
+    commit_message: str = "Upload poetru checkpoint and evaluation artefacts",
 ) -> None:
     """Uploads weights, config, metrics, generated poems, and model card to the Hub.
 
@@ -51,6 +52,7 @@ def publish_model_bundle(
         generated_poems_path: JSONL with generated poems.
         repo_id: Hub model repository id.
         token: Hugging Face access token.
+        commit_message: Hub commit description.
 
     Returns:
         None.
@@ -87,7 +89,7 @@ def publish_model_bundle(
         folder_path=str(publish_root),
         repo_type="model",
         token=token,
-        commit_message="Upload poetru-75m checkpoint and evaluation artefacts",
+        commit_message=commit_message,
     )
 
 

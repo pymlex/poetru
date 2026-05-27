@@ -349,6 +349,27 @@ bash scripts/push_hub.sh publish
 
 On Windows without Bash, `scripts/push_github.ps1` mirrors the Git steps.
 
+### Mid-training sync without stopping `train_model`
+
+While `train_model` runs in another terminal, pull the latest scripts and publish a **read-only snapshot**. The sync copies `artifacts/logs/train_history.csv`, the newest `step_*.pt` or `final.pt`, tokenizer files, and everything under `artifacts/metrics/` including `token_length_hist.png`. It never deletes or moves checkpoints that training may still write.
+
+```bash
+git pull origin main
+bash scripts/sync_progress.sh
+```
+
+Optional flags:
+
+```bash
+bash scripts/sync_progress.sh --skip-github
+bash scripts/sync_progress.sh --skip-hf
+python scripts/sync_progress.py --root . --message "Manual snapshot"
+```
+
+**GitHub** receives `docs/experiments/poetru_75m_train_history.csv`, loss plots, `poetru_75m_sync_meta.json`, and a copy of the token-length histogram when present. Checkpoints stay out of Git because `*.pt` is ignored.
+
+**Hugging Face** receives the tokenizer repo, then a model repo bundle with `model.pt`, `config.json`, `tokenizer/`, `metrics/`, and `MODEL_CARD.md` as `README.md`. Set `HF_TOKEN`, `HF_MODEL_REPO`, and `HF_TOKENIZER_REPO` in `.env` before the first upload.
+
 ## Inference from a local checkpoint
 
 First cell loads weights and tokenizer.

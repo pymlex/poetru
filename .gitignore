@@ -9,6 +9,7 @@ venv/
 wandb/
 runs/
 artifacts/checkpoints/
+artifacts/hub_staging/
 *.pt
 *.bin
 .idea/
