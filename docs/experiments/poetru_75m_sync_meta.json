@@ -1,5 +1,5 @@
 {
-  "step": 50000,
+  "step": 60000,
   "epoch": 0.0,
   "config": {
     "vocab_size": 24000,
@@ -13,6 +13,6 @@
     "dropout": 0.1,
     "rope_theta": 10000.0
   },
-  "source_checkpoint": "step_50000.pt",
-  "synced_at_utc": "2026-05-27T21:06:24.152824+00:00"
+  "source_checkpoint": "step_60000.pt",
+  "synced_at_utc": "2026-05-27T21:52:42.722762+00:00"
 }
