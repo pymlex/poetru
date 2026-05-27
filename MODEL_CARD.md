@@ -12,7 +12,7 @@ datasets:
 
 # poetru-25m
 
-Compact Russian poetry language model trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru) with ByteLevel BPE, RoPE, GQA, MLA-style latent KV compression, SwiGLU blocks, and tied embeddings.
+Compact Russian poetry causal language model trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru) with ByteLevel BPE, RoPE, GQA, MLA-style latent KV compression, SwiGLU blocks, and tied embeddings.
 
 ## Architecture
 
@@ -26,13 +26,27 @@ Compact Russian poetry language model trained on [IlyaGusev/stihi_ru](https://hu
 | FFN | SwiGLU, intermediate 1024 |
 | Context | 512 tokens |
 | Vocabulary | 24000 ByteLevel BPE |
-| Positional encoding | RoPE, $\theta = 10000$ |
+| Positional encoding | RoPE base 10000 |
 
-Chinchilla scaling targets ~20 tokens per parameter. With ~455M BPE tokens in the corpus and 2.5 epochs the model sees about $1.14 \times 10^9$ token updates, which matches a ~25M parameter budget.
+Chinchilla-style scaling motivates on the rough order of 20 training tokens per parameter. The stihi_ru ByteLevel-BPE token count is on the rough order of 455 million. Training for 2.5 epochs yields a cumulative token budget on the rough order of the display line below for loss updates, consistent with compute-optimal training for roughly 25 million parameters.
+
+$$
+1.14 \times 10^{9}
+$$
 
 ## Watermarking
 
-Generation applies the soft green-list bias from Kirchenbauer et al., 2023 with $\gamma = 0.25$ and $\delta = 2.0$. Detection uses the one-sided z-test shipped in `watermark.py`.
+Generation applies the soft green-list bias from Kirchenbauer et al., 2023 ([arXiv:2301.10226](https://arxiv.org/abs/2301.10226)). Default detection parameters are packaged as gamma and delta in the published code:
+
+$$
+\gamma = 0.25
+$$
+
+$$
+\delta = 2.0
+$$
+
+Detection uses the one-sided green-list proportion test outlined in `watermark.py`.
 
 ## Metrics
 
