@@ -1,0 +1,14 @@
+torch>=2.4.0
+numpy>=1.26.0
+pandas>=2.2.0
+matplotlib>=3.8.0
+scikit-learn>=1.4.0
+scipy>=1.12.0
+datasets>=3.6.0
+tokenizers>=0.20.0
+huggingface_hub>=0.24.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+tqdm>=4.66.0
+nvidia-ml-py>=12.535.0
+python-dotenv>=1.0.0
