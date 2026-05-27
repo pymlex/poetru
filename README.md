@@ -22,7 +22,7 @@ $$
 N_{\ast} \approx \frac{T_{\mathrm{train}}}{20} \approx 6.8 \times 10^{7}.
 $$
 
-`TransformerConfig` targets about **75 million** trainable parameters with **weight tying** on the output projection, which is roughly **10 percent** above $N_{\ast}$. With `micro_batch_size = 64` and `grad_accum_steps = 1`, a full run is on the rough order of **240 thousand** optimiser steps on the full train split.
+`TransformerConfig` targets about **75 million** trainable parameters with **weight tying** on the output projection, which is roughly **10 percent** above $N_{\ast}$. With `micro_batch_size = 32` and `grad_accum_steps = 2`, a full run is on the rough order of **240 thousand** optimiser steps on the full train split.
 
 The exact trainable count after you run `train_model` is written to `artifacts/metrics/model_param_count.json` so you can verify it on your machine without hand-waving.
 
@@ -147,8 +147,8 @@ If you train on a smaller machine, reduce `micro_batch_size`, `num_workers`, or 
 
 | Hyperparameter | Value |
 | --- | ---: |
-| micro batch size | 64 |
-| gradient accumulation | 1 |
+| micro batch size | 32 |
+| gradient accumulation | 2 |
 | epochs | 3 |
 | learning rate | `3e-4` |
 | weight decay | `0.01` |

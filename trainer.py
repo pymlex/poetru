@@ -58,7 +58,7 @@ class Trainer:
         )
 
         self.autocast_dtype = torch.bfloat16 if cfg.dtype == "bfloat16" and torch.cuda.is_available() else torch.float32
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.autocast_dtype == torch.float16)
+        self.scaler = torch.amp.GradScaler("cuda", enabled=self.autocast_dtype == torch.float16)
 
         self.history_csv = logs_dir / "train_history.csv"
         self.logs_dir.mkdir(parents=True, exist_ok=True)
