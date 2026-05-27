@@ -10,19 +10,19 @@ Published checkpoints and artefacts are mirrored on the Hub under [`pymlex/poetr
 
 ## Scaling rationale
 
-[Hoffmann et al., Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556), usually referred to as **Chinchilla**, reports approximate compute-optimal token counts on the order of **20 tokens per parameter** for the sizes they explored. The poetry corpus is on the rough order of **455 million ByteLevel-BPE tokens** across about **2 GB** of UTF-8 text when the tokenizer is saturated to 24 k merges. Training for **2.5 epochs** exposes the optimiser to on the rough order of
+[Hoffmann et al., Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556), usually referred to as **Chinchilla**, reports approximate compute-optimal token counts on the order of **20 tokens per parameter** for the sizes they explored. The poetry corpus is on the rough order of **455 million ByteLevel-BPE tokens** across about **2 GB** of UTF-8 text when the tokenizer is saturated to 24 k merges. Training for **3 epochs** exposes the optimiser to on the rough order of
 
 $$
-T_{\mathrm{train}} \approx 2.5 \times 4.55 \times 10^{8} \approx 1.14 \times 10^{9}
+T_{\mathrm{train}} \approx 3 \times 4.55 \times 10^{8} \approx 1.37 \times 10^{9}
 $$
 
 token positions counted on truncated prefixes up to **512** BPE tokens per poem. The Chinchilla compute-optimal parameter count for that budget is
 
 $$
-N_{\ast} \approx \frac{T_{\mathrm{train}}}{20} \approx 5.7 \times 10^{7}.
+N_{\ast} \approx \frac{T_{\mathrm{train}}}{20} \approx 6.8 \times 10^{7}.
 $$
 
-`TransformerConfig` targets about **75 million** trainable parameters with **weight tying** on the output projection, which is roughly **30 percent** above $N_{\ast}$. That trades a slightly sub-Chinchilla tokens-per-parameter ratio near **15** for additional capacity on a corpus where validation cross-entropy was still falling through the **25M** run you logged near **53k** steps.
+`TransformerConfig` targets about **75 million** trainable parameters with **weight tying** on the output projection, which is roughly **10 percent** above $N_{\ast}$. With `micro_batch_size = 64` and `grad_accum_steps = 1`, a full run is on the rough order of **240 thousand** optimiser steps on the full train split.
 
 The exact trainable count after you run `train_model` is written to `artifacts/metrics/model_param_count.json` so you can verify it on your machine without hand-waving.
 
@@ -143,13 +143,13 @@ If you train on a smaller machine, reduce `micro_batch_size`, `num_workers`, or 
 
 ### Optimiser and schedule
 
-`trainer.py` wires **AdamW** with decoupled weight decay and a custom **cosine decay** schedule that starts after a **linear warmup** whose length is `warmup_ratio` times the total optimisation steps. Gradient norms are clipped. Training steps are derived from `len(train_loader) * num_epochs` with **gradient accumulation** counting as micro-steps before each optimiser update.
+`trainer.py` wires **AdamW** with decoupled weight decay and a custom **cosine decay** schedule that starts after a **linear warmup** whose length is `warmup_ratio` times the total optimisation steps. Gradient norms are clipped. Each optimiser step is one forward-backward pass on a full micro-batch. Training steps are `len(train_loader) * num_epochs`.
 
 | Hyperparameter | Value |
 | --- | ---: |
-| micro batch size | 16 |
-| gradient accumulation | 4 |
-| epochs | 2.5 |
+| micro batch size | 64 |
+| gradient accumulation | 1 |
+| epochs | 3 |
 | learning rate | `3e-4` |
 | weight decay | `0.01` |
 | warmup ratio | `0.002` |

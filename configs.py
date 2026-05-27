@@ -25,9 +25,9 @@ class TrainConfig:
 
     dataset_name: str = "IlyaGusev/stihi_ru"
     dataset_split: str = "train"
-    micro_batch_size: int = 16
-    grad_accum_steps: int = 4
-    num_epochs: float = 2.5
+    micro_batch_size: int = 64
+    grad_accum_steps: int = 1
+    num_epochs: float = 3.0
     learning_rate: float = 3e-4
     weight_decay: float = 0.01
     warmup_ratio: float = 0.002

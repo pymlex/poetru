@@ -28,13 +28,13 @@ Compact Russian poetry causal language model trained on [IlyaGusev/stihi_ru](htt
 | Vocabulary | 24000 ByteLevel BPE |
 | Positional encoding | RoPE base 10000 |
 
-Chinchilla-style scaling uses on the rough order of 20 training tokens per parameter. The stihi_ru ByteLevel-BPE token count is on the rough order of 455 million. Training for 2.5 epochs yields a cumulative token budget on the rough order of
+Chinchilla-style scaling uses on the rough order of 20 training tokens per parameter. The stihi_ru ByteLevel-BPE token count is on the rough order of 455 million. Training for 3 epochs yields a cumulative token budget on the rough order of
 
 $$
-T_{\mathrm{train}} \approx 1.14 \times 10^{9}
+T_{\mathrm{train}} \approx 1.37 \times 10^{9}
 $$
 
-which implies a compute-optimal parameter count near $5.7 \times 10^{7}$. This checkpoint uses about $7.5 \times 10^{7}$ trainable parameters, roughly 30 percent above that estimate.
+which implies a compute-optimal parameter count near $6.8 \times 10^{7}$. This checkpoint uses about $7.5 \times 10^{7}$ trainable parameters, slightly above that estimate.
 
 ## Watermarking
 
