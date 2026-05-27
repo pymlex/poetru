@@ -12,4 +12,4 @@ if [[ -f .env ]]; then
 fi
 
 git pull origin main
-python scripts/sync_progress.py --root "$ROOT" "$@"
+PYTHONPATH="$ROOT" python scripts/sync_progress.py --root "$ROOT" "$@"

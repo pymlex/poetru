@@ -4,8 +4,13 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from checkpoint_utils import read_checkpoint_meta, resolve_publish_checkpoint
 from hub_utils import load_env, publish_model_bundle, publish_tokenizer
