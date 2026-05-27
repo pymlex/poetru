@@ -1,4 +1,4 @@
-# poetru-25m
+# Poetru-25M
 
 ## Overview
 
@@ -94,12 +94,7 @@ $$
 
 For token position `m` and pair index `k`, the two-dimensional rotation is
 
-$$
-\begin{pmatrix} q'_{2k} \\ q'_{2k+1} \end{pmatrix}
-=
-\begin{pmatrix} \cos(m\theta_k) & -\sin(m\theta_k) \\ \sin(m\theta_k) & \cos(m\theta_k) \end{pmatrix}
-\begin{pmatrix} q_{2k} \\ q_{2k+1} \end{pmatrix}
-$$
+$\begin{pmatrix} q'_{2k} \\ q'_{2k+1} \end{pmatrix} = \begin{pmatrix} \cos(m\theta_k) & -\sin(m\theta_k) \\ \sin(m\theta_k) & \cos(m\theta_k) \end{pmatrix} \begin{pmatrix} q_{2k} \\ q_{2k+1} \end{pmatrix}$
 
 The same transform is applied to key rows before the scaled dot product.
 
