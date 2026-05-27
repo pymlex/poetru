@@ -143,7 +143,7 @@ If you train on a smaller machine, reduce `micro_batch_size`, `num_workers`, or 
 
 ### Optimiser and schedule
 
-`trainer.py` wires **AdamW** with decoupled weight decay and a custom **cosine decay** schedule that starts after a **linear warmup** whose length is `warmup_ratio` times the total optimisation steps. Gradient norms are clipped. Each optimiser step is one forward-backward pass on a full micro-batch. Training steps are `len(train_loader) * num_epochs`.
+`trainer.py` wires **AdamW** with decoupled weight decay and a custom **cosine decay** schedule that starts after a **linear warmup** whose length is `warmup_ratio` times the total optimisation steps. Gradient norms are clipped. Each optimiser step runs `grad_accum_steps` micro-batches before the AdamW update. Training steps are `len(train_loader) // grad_accum_steps * num_epochs`.
 
 | Hyperparameter | Value |
 | --- | ---: |
