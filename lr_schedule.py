@@ -31,10 +31,9 @@ class CosineWarmupScheduler(LRScheduler):
         """Computes multiplicative factors per param group."""
 
         step = self.last_epoch + 1
-        base_lrs = [group["lr"] for group in self.optimizer.param_groups]
         out: list[float] = []
 
-        for base_lr in base_lrs:
+        for base_lr in self.base_lrs:
             eta_min = base_lr * self.eta_min_ratio
             if step < self.warmup_steps:
                 scale = float(step) / float(max(1, self.warmup_steps))
