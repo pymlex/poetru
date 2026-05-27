@@ -27,6 +27,7 @@ class Trainer:
         tcfg: TransformerConfig,
         checkpoint_dir: Path,
         logs_dir: Path,
+        resume_payload: dict | None = None,
     ) -> None:
         self.model = model
         self.train_loader = train_loader
@@ -57,14 +58,26 @@ class Trainer:
             total_steps=self.total_steps,
         )
 
+        self.start_step = 0
+        self.start_epoch = 0.0
+        if resume_payload is not None:
+            self.optimizer.load_state_dict(resume_payload["optimizer_state"])
+            self.scheduler.load_state_dict(resume_payload["scheduler_state"])
+            self.start_step = int(resume_payload["step"])
+            self.start_epoch = float(resume_payload["epoch"])
+
         self.autocast_dtype = torch.bfloat16 if cfg.dtype == "bfloat16" and torch.cuda.is_available() else torch.float32
         self.scaler = torch.amp.GradScaler("cuda", enabled=self.autocast_dtype == torch.float16)
 
         self.history_csv = logs_dir / "train_history.csv"
         self.logs_dir.mkdir(parents=True, exist_ok=True)
-        with self.history_csv.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["step", "epoch", "loss", "val_loss", "lr", "gpu_util", "gpu_mem_used_mb", "gpu_mem_total_mb"])
+        resuming_log = resume_payload is not None and self.history_csv.exists()
+        if not resuming_log:
+            with self.history_csv.open("w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    ["step", "epoch", "loss", "val_loss", "lr", "gpu_util", "gpu_mem_used_mb", "gpu_mem_total_mb"]
+                )
 
         self.gpu = GpuTelemetry() if torch.cuda.is_available() else None
 
@@ -112,13 +125,25 @@ class Trainer:
         from checkpoint_utils import save_checkpoint
 
         self.model.train()
-        global_step = 0
-        epoch = 0.0
+        global_step = self.start_step
+        epoch = self.start_epoch
         running_loss = 0.0
         accum = 0
 
+        if global_step >= self.total_steps:
+            final_ckpt = self.checkpoint_dir / "final.pt"
+            save_checkpoint(
+                final_ckpt,
+                self.model,
+                self.optimizer,
+                self.scheduler,
+                global_step,
+                epoch,
+            )
+            return final_ckpt
+
         data_iter = iter(self.train_loader)
-        pbar = tqdm(total=self.total_steps, desc="Training")
+        pbar = tqdm(total=self.total_steps, initial=global_step, desc="Training")
 
         while global_step < self.total_steps:
             self.optimizer.zero_grad(set_to_none=True)

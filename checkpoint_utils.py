@@ -112,6 +112,19 @@ def read_checkpoint_meta(path: Path) -> dict:
     }
 
 
+def load_training_payload(path: Path) -> dict:
+    """Loads a full training checkpoint dict on CPU for resume.
+
+    Args:
+        path: Checkpoint `.pt` file from `save_checkpoint`.
+
+    Returns:
+        Payload with model, optimiser, scheduler states and step counters.
+    """
+
+    return torch.load(path, map_location="cpu", weights_only=False)
+
+
 def load_checkpoint(path: Path, device: torch.device) -> tuple[PoetruCausalLM, dict]:
     """Restores a checkpoint into a freshly constructed model.
 

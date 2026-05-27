@@ -370,6 +370,27 @@ python scripts/sync_progress.py --root . --message "Manual snapshot"
 
 **Hugging Face** receives the tokenizer repo, then a model repo bundle with `model.pt`, `config.json`, `tokenizer/`, `metrics/`, and `MODEL_CARD.md` as `README.md`. Set `HF_TOKEN`, `HF_MODEL_REPO`, and `HF_TOKENIZER_REPO` in `.env` before the first upload.
 
+### Resume training on another machine
+
+Each `step_*.pt` and `final.pt` file stores **model weights**, **AdamW state**, **scheduler state**, **`step`**, and **`epoch`**. To continue on a new host:
+
+1. Copy `artifacts/tokenizer/`, the checkpoint file, and optionally `artifacts/logs/train_history.csv`.
+2. Or run `download_inference_artifacts` after `sync_progress` uploaded a bundle to the Hub. The downloaded `final.pt` is a full training checkpoint, not weights-only.
+3. Keep the same `TrainConfig` hyperparameters, especially `num_epochs`, `learning_rate`, `warmup_ratio`, batch sizes, and `seed` for the train or validation split.
+4. Start training from the file:
+
+```bash
+python main.py train_model --root . --resume artifacts/checkpoints/step_53000.pt
+```
+
+Use the latest periodic file automatically:
+
+```bash
+python main.py train_model --root . --resume latest
+```
+
+The tqdm bar continues from the saved **global step** until `total_steps = len(train_loader) // grad_accum_steps * num_epochs`. The LR schedule restores from the saved scheduler state. Shuffling restarts a new epoch order on the new machine, so the exact token sequence is not bit-identical to an uninterrupted run, but the optimiser and step counter remain consistent.
+
 ## Inference from a local checkpoint
 
 Weights and the ByteLevel tokenizer live under `artifacts/`. That directory is not tracked in Git. After `train_model` the files are on disk locally. In Colab or another fresh clone, download them from the Hub first.

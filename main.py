@@ -56,11 +56,35 @@ def train_tokenizer(root: Path) -> None:
     save_json(paths.metrics_dir / "token_length_stats.json", stats)
 
 
-def train_model(root: Path) -> None:
+def resolve_resume_path(root: Path, resume: str | None) -> Path | None:
+    """Maps CLI resume values to a concrete checkpoint path.
+
+    Args:
+        root: Repository root.
+        resume: Path string, `latest`, or `None`.
+
+    Returns:
+        Checkpoint path when resuming, otherwise `None`.
+    """
+
+    if resume is None:
+        return None
+    if resume == "latest":
+        from checkpoint_utils import latest_step_checkpoint
+
+        paths = ProjectPaths(root)
+        latest = latest_step_checkpoint(paths.checkpoint_dir)
+        if latest is None:
+            raise FileNotFoundError(f"No step_*.pt checkpoints under {paths.checkpoint_dir}")
+        return latest
+    return Path(resume).resolve()
+
+
+def train_model(root: Path, resume: str | None = None) -> None:
     """Runs the full language modelling training loop."""
 
     from bpe_tokenizer import ByteBPETokenizerWrapper
-    from checkpoint_utils import count_parameters
+    from checkpoint_utils import count_parameters, load_training_payload
     from data_utils import PoetryTokenDataset
     from model import PoetruCausalLM
     from trainer import Trainer
@@ -70,7 +94,19 @@ def train_model(root: Path) -> None:
     seed_everything(train_cfg.seed)
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
-    tcfg = replace(TransformerConfig(), vocab_size=tokenizer.vocab_size)
+    resume_path = resolve_resume_path(root, resume)
+    resume_payload = None
+    if resume_path is not None:
+        resume_payload = load_training_payload(resume_path)
+        tcfg = TransformerConfig(**resume_payload["config"])
+        if tcfg.vocab_size != tokenizer.vocab_size:
+            raise ValueError(
+                f"Checkpoint vocab_size {tcfg.vocab_size} does not match tokenizer {tokenizer.vocab_size}."
+            )
+        model = PoetruCausalLM(tcfg)
+        model.load_state_dict(resume_payload["model_state"])
+    else:
+        tcfg = replace(TransformerConfig(), vocab_size=tokenizer.vocab_size)
     texts = load_poetry_texts(train_cfg.dataset_name, train_cfg.dataset_split, seed=train_cfg.seed)
     rng = __import__("numpy").random.default_rng(train_cfg.seed)
     perm = rng.permutation(len(texts))
@@ -98,7 +134,9 @@ def train_model(root: Path) -> None:
         num_workers=train_cfg.num_workers,
     )
 
-    model = PoetruCausalLM(tcfg)
+    if resume_payload is None:
+        model = PoetruCausalLM(tcfg)
+
     save_json(
         paths.metrics_dir / "model_param_count.json",
         {"trainable_parameters": count_parameters(model), "config": tcfg.__dict__},
@@ -112,6 +150,7 @@ def train_model(root: Path) -> None:
         tcfg=tcfg,
         checkpoint_dir=paths.checkpoint_dir,
         logs_dir=paths.logs_dir,
+        resume_payload=resume_payload,
     )
     trainer.run()
 
@@ -454,6 +493,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--count", type=int, default=None, help="Override generated poem count")
+    parser.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Checkpoint path or 'latest' to continue train_model from a saved step",
+    )
     return parser
 
 
@@ -466,7 +511,7 @@ def main() -> None:
     if args.stage in {"train_tokenizer", "all"}:
         train_tokenizer(root)
     if args.stage in {"train_model", "all"}:
-        train_model(root)
+        train_model(root, resume=args.resume)
     if args.stage in {"generate", "all"}:
         generate_poems(root, count=args.count)
     if args.stage in {"perplexity", "all"}:
