@@ -44,9 +44,11 @@ Random guessing at vocabulary size 24k sits near $\ln(24000) \approx 10.1$ nats,
 
 ![Poetru-25M train and validation CE, linear axes](docs/experiments/poetru_25m_loss_linear.png)
 
-**Log-log scale**
+**Chinchilla-style coordinates**
 
-![Poetru-25M train and validation CE, log-log axes](docs/experiments/poetru_25m_loss_loglog.png)
+[Hoffmann et al.](https://arxiv.org/abs/2203.15556) relate language-model loss to compute and parameter count through power laws. The scaling figure uses $\log(\mathrm{step})$ on the horizontal axis and $\log\log L$ on the vertical axis, where $L$ is cross-entropy and both logarithms are natural. Every logged value satisfies $L > 1$, so $\log\log L$ is real on this segment. A straight segment in this plane is the project convention for comparing decay to Chinchilla-type scaling on the pilot run.
+
+![Poetru-25M train and validation CE, log step vs log log loss](docs/experiments/poetru_25m_loss_loglog.png)
 
 Regenerate the PNG files after editing the CSV:
 
