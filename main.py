@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 
 from configs import AuthorPCConfig, GenerationConfig, TokenizerTrainConfig, TrainConfig, TransformerConfig
@@ -64,13 +65,12 @@ def train_model(root: Path) -> None:
     from trainer import Trainer
 
     paths = ProjectPaths(root)
-    tcfg = TransformerConfig()
     train_cfg = TrainConfig()
     seed_everything(train_cfg.seed)
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
+    tcfg = replace(TransformerConfig(), vocab_size=tokenizer.vocab_size)
     texts = load_poetry_texts(train_cfg.dataset_name, train_cfg.dataset_split, seed=train_cfg.seed)
-
     rng = __import__("numpy").random.default_rng(train_cfg.seed)
     perm = rng.permutation(len(texts))
     split = int(len(texts) * 0.995)
@@ -237,7 +237,7 @@ def evaluate_watermark(root: Path) -> None:
     wm_cfg = WatermarkConfig(gamma=gen_cfg.watermark_gamma, delta=gen_cfg.watermark_delta)
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
-    vocab_size = TokenizerTrainConfig().vocab_size
+    vocab_size = tokenizer.vocab_size
 
     generated_rows = []
     with paths.generated_poems_path.open("r", encoding="utf-8") as f:

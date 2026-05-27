@@ -67,6 +67,12 @@ class ByteBPETokenizerWrapper:
         self.eos_id = int(self._tok.token_to_id("[EOS]"))
         self.unk_id = int(self._tok.token_to_id("[UNK]"))
 
+    @property
+    def vocab_size(self) -> int:
+        """Trained vocabulary size including specials."""
+
+        return int(self._tok.get_vocab_size())
+
     @classmethod
     def from_file(cls, path: Path) -> ByteBPETokenizerWrapper:
         """Loads a trained tokenizer from `tokenizer.json`.

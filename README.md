@@ -67,7 +67,9 @@ The runtime wrapper is `ByteBPETokenizerWrapper` in `bpe_tokenizer.py`. It expos
 
 ## Model architecture
 
-The module `model.py` implements `PoetruCausalLM`. The table below summarises `TransformerConfig` defaults. **Headings here use plain text on purpose** because GitHub does not render mathematics inside Markdown heading lines.
+The module `model.py` implements `PoetruCausalLM`. The table below summarises `TransformerConfig` defaults. **`vocab_size` is taken from `tokenizer.json` when you call `train_model`**, never from hard-coded defaults alone, because ByteLevel merges can settle on sizes such as **`24000`** plus **`3`** specials.
+
+The table lists static defaults except vocabulary which is overwritten at runtime.
 
 | Block | Value |
 | --- | ---: |
@@ -137,20 +139,20 @@ If you train on a smaller machine, reduce `micro_batch_size`, `num_workers`, or 
 | gradient accumulation | 4 |
 | epochs | 2.5 |
 | learning rate | `3e-4` |
-| weight decay | `0.1` |
-| warmup ratio | `0.03` |
+| weight decay | `0.01` |
+| warmup ratio | `0.002` |
 | max grad norm | `1.0` |
 | Adam `betas` | `(0.9, 0.95)` |
 | Adam `eps` | `1e-8` |
 | precision | `bfloat16` autocast on CUDA when available |
-| log train loss every | 50 steps |
-| run full validation every | 200 steps |
-| checkpoint every | 2 000 steps |
-| validation batches when eval runs | 200 |
+| log averaged train CE, checkpoint, validation | every **`1000`** optimiser steps |
+| validation batches per eval pass | `200` |
 
-On rows where validation is skipped, `val_loss` in `train_history.csv` is blank. For continuous validation curves after `read_csv` you can run `df["val_loss"] = pd.to_numeric(df["val_loss"], errors="coerce").ffill()` in `pandas`.
+The tqdm bar shows the **instantaneous CE** summed over gradient micro-batches **`ce`** plus current **`lr`** on every step. CSV rows aggregate train loss only on multiples of **`1000`**.
 
-**GPU telemetry** from NVML is appended to `artifacts/logs/train_history.csv` as utilisation percent and used or total VRAM in megabytes on each logging row.
+If **`ce`** stays within a few hundredths of **`ln(vocab)`** for a long interval read the live **`lr`** in the tqdm postfix. Very long linear warmups or weight decay that is too aggressive for language modelling both flatten early progress. This branch shortens warmup and reduces AdamW weight decay. **`train_model`** copies **`vocab_size`** from **`tokenizer.json`** so **`nn.Embedding`** always matches the merger table that produced your checkpoint.
+
+**GPU telemetry** from NVML is appended only on **`1000`-step CSV rows**.
 
 You can plot `train_history.csv` with any notebook. A minimal helper sketch:
 
