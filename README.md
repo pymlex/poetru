@@ -26,6 +26,34 @@ $$
 
 The exact trainable count after you run `train_model` is written to `artifacts/metrics/model_param_count.json` so you can verify it on your machine without hand-waving.
 
+## Pilot experiment: Poetru-25M
+
+Before scaling to the current **75M** width, a pilot run trained the earlier **Poetru-25M** stack on the same `stihi_ru` split with **ByteLevel BPE 24k**, context **512**, **AdamW** at **`3e-4`**, **`micro_batch_size = 16`**, **`grad_accum_steps = 4`**, and **2.5 epochs** scheduled for on the rough order of **200k** optimiser steps. Training stopped manually at step **53000** while both train and validation cross-entropy were still decreasing.
+
+Logged metrics every **1000** steps are archived in [`docs/experiments/poetru_25m_train_to_53k.csv`](docs/experiments/poetru_25m_train_to_53k.csv). At the last row:
+
+| Metric | Step 1000 | Step 53000 |
+| --- | ---: | ---: |
+| Train CE | 6.35 | 4.08 |
+| Val CE | 5.47 | 3.93 |
+| Learning rate | $3.00 \times 10^{-4}$ | $2.56 \times 10^{-4}$ |
+
+Random guessing at vocabulary size 24k sits near $\ln(24000) \approx 10.1$ nats, so the pilot left that regime early and continued to improve through **53k** without a clear plateau. That curve motivated the larger **`TransformerConfig`** in this branch rather than extending the 25M schedule to the full **200k** steps.
+
+**Linear scale**
+
+![Poetru-25M train and validation CE, linear axes](docs/experiments/poetru_25m_loss_linear.png)
+
+**Log-log scale**
+
+![Poetru-25M train and validation CE, log-log axes](docs/experiments/poetru_25m_loss_loglog.png)
+
+Regenerate the PNG files after editing the CSV:
+
+```bash
+python scripts/plot_poetru_25m_experiment.py
+```
+
 ## Dataset
 
 The source split is the public `train` partition of [`IlyaGusev/stihi_ru`](https://huggingface.co/datasets/IlyaGusev/stihi_ru). Each row includes at least the following fields that this project touches:
