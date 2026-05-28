@@ -160,6 +160,7 @@ def generate_poems(root: Path, count: int | None = None) -> None:
 
     import json
     import torch
+    from tqdm.auto import tqdm
 
     from bpe_tokenizer import ByteBPETokenizerWrapper
     from checkpoint_utils import load_checkpoint
@@ -186,7 +187,7 @@ def generate_poems(root: Path, count: int | None = None) -> None:
     ]
 
     rows = []
-    for idx in range(target):
+    for idx in tqdm(range(target), desc="Generating poems"):
         prompt = prompts[idx % len(prompts)]
         prompt_ids = tokenizer.encode(prompt, add_eos=False)
         token_ids, _ = generate_poem(
