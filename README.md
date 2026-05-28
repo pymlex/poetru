@@ -70,7 +70,7 @@ flowchart TB
         D5 --> D7
         D7 --> D8
     end
-
+```
 
 RoPE angular frequencies:
 
