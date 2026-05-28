@@ -39,36 +39,36 @@ Architecture flow diagram:
 
 ```mermaid
 flowchart TB
-    A[Input token ids] --> B[Embedding]
-    B --> C[Dropout]
-    C --> D[Transformer block x12]
-    D --> E[RMSNorm]
-    E --> F[LM head tied with embedding]
+    A[Input token ids] --> B[Embedding] --> C[Dropout] --> D[Transformer block x12] --> E[RMSNorm] --> F[LM head tied with embedding]
 
     subgraph D[Transformer block]
         direction TB
+        
         D1[RMSNorm]
-        D2[Q projection]
-        D3[KV down projection]
-        D4[K up projection]
-        D5[V up projection]
-        D6[RoPE]
-        D7[GQA attention]
+        
+        subgraph Projections [ ]
+            direction LR
+            D2[Q projection]
+            D3[KV down projection] --> D4[K up projection]
+            D3 --> D5[V up projection]
+        end
+        
+        subgraph Attention [ ]
+            direction LR
+            D6[RoPE] --> D7[GQA attention]
+            D5_att[V up] --> D7
+        end
 
-        subgraph FeedForward [ ]
+        subgraph Layers [ ]
             direction LR
             D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
         end
 
-        D1 --> D2
-        D1 --> D3
-        D3 --> D4
-        D3 --> D5
+        D1 --> Projections
         D2 --> D6
         D4 --> D6
-        D6 --> D7
-        D5 --> D7
-        D7 --> D8
+        D5 --> D5_att
+        Attention --> D8
     end
 ```
 
