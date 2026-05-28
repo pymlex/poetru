@@ -242,9 +242,12 @@ def evaluate_perplexity(root: Path) -> None:
     train_cfg = TrainConfig()
     tcfg = TransformerConfig()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    setup_bar = tqdm(total=3, desc="Perplexity setup")
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
+    setup_bar.update(1)
     texts = load_poetry_texts(train_cfg.dataset_name, train_cfg.dataset_split, sample_fraction=0.01, seed=train_cfg.seed)
+    setup_bar.update(1)
     val_ds = PoetryTokenDataset(texts[-5000:], tokenizer, tcfg.max_seq_len)
     val_loader = build_dataloader(
         val_ds,
@@ -254,6 +257,8 @@ def evaluate_perplexity(root: Path) -> None:
         shuffle=False,
         num_workers=0,
     )
+    setup_bar.update(1)
+    setup_bar.close()
 
     model, _ = load_checkpoint(paths.checkpoint_dir / "final.pt", device)
     model.eval()
