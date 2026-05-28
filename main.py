@@ -179,27 +179,29 @@ def generate_poems(root: Path, count: int | None = None) -> None:
     model.eval()
 
     rng = __import__("numpy").random.default_rng(train_cfg.seed)
+    pool_size = target * 100
     ds = open_poetry_dataset(train_cfg.dataset_name, train_cfg.dataset_split, streaming=True)
-    topic_sample: list[str] = []
-    seen_topics: set[str] = set()
-    unique_count = 0
-    for row in tqdm(ds, desc="Collecting topics"):
-        topic = str(row.get("topic", "")).strip()
-        if not topic or topic in seen_topics:
-            continue
-        seen_topics.add(topic)
-        unique_count += 1
-        if len(topic_sample) < target:
-            topic_sample.append(topic)
-            continue
-        replace_idx = int(rng.integers(0, unique_count))
-        if replace_idx < target:
-            topic_sample[replace_idx] = topic
+    pool_texts: list[str] = []
+    for row in tqdm(ds, desc="Collecting prompt pool"):
+        text = str(row.get("text", "")).strip()
+        if text:
+            pool_texts.append(text)
+        if len(pool_texts) >= pool_size:
+            break
 
-    if len(topic_sample) < target:
-        raise ValueError(f"Found only {len(topic_sample)} unique topics, required {target}.")
+    if len(pool_texts) < target:
+        raise ValueError(f"Found only {len(pool_texts)} poems in prompt pool, required {target}.")
 
-    prompts = [f"Тема: {topic}" for topic in topic_sample]
+    sampled_idx = rng.choice(len(pool_texts), size=target, replace=False)
+    prompts: list[str] = []
+    for idx in sampled_idx:
+        token_ids = tokenizer.encode(pool_texts[int(idx)], add_eos=False)
+        n_prefix = int(rng.integers(2, 4))
+        prefix_ids = token_ids[:n_prefix]
+        prompt = tokenizer.decode(prefix_ids).strip()
+        if not prompt:
+            prompt = pool_texts[int(idx)].split(maxsplit=2)[0]
+        prompts.append(prompt)
 
     rows = []
     for start in tqdm(range(0, target, batch_size), desc="Generating poems"):
