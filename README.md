@@ -54,6 +54,7 @@ flowchart LR
 ```
 
 ### RoPE
+
 RoPE is used to encode relative position directly in attention space without learned absolute position embeddings. This keeps extrapolation to longer rhythm patterns more stable and preserves translation structure in the query-key dot product. The formulation follows Rotary Position Embedding from RoFormer.
 
 RoPE angular frequencies:
@@ -265,6 +266,8 @@ GPL-3.0, see `LICENSE`.
 
 ## Citation
 
+If you found this project useful, please cite it as:
+
 ```bibtex
 @software{zyukov2026poetru75,
   author  = {Zyukov, Alex},
@@ -277,8 +280,6 @@ GPL-3.0, see `LICENSE`.
 ```
 
 ## References
-
-Full bibliography: `references.bib`.
 
 ```bibtex
 @misc{su2021roformer,
