@@ -2,7 +2,7 @@
 
 ## Overview
 
-Poetru-75M is a Russian poetry SLM for generation, perplexity tracking, watermark detection, and author-space analysis on `IlyaGusev/stihi_ru`. Model and tokenizer are published in the Hugging Face [repository](https://huggingface.co/pymlex/poetru-75m).
+Poetru-75M is a Russian SLM for poem generation trained on 2 GB of Russian poetry, presented in the `IlyaGusev/stihi_ru` [dataset](https://huggingface.co/datasets/IlyaGusev/stihi_ru). We implement it from scratch with optimisation techniques. Inference includes digital watermarking mode. The model and tokenizer are published in the Hugging Face [repository](https://huggingface.co/pymlex/poetru-75m).
 
 ## Chinchilla Budget
 
