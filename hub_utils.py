@@ -9,6 +9,87 @@ from huggingface_hub import HfApi, hf_hub_download, upload_folder
 from pydantic_models import EnvSettings, ProjectPaths
 
 
+HF_MODEL_CARD_FRONTMATTER = """---
+language: ru
+license: gpl-3.0
+tags:
+  - poetry
+  - russian
+  - causal-lm
+  - watermark
+datasets:
+  - IlyaGusev/stihi_ru
+---
+"""
+
+
+def build_hub_readme(readme_path: Path, repo_id: str) -> str:
+    """Builds a Hugging Face model card from the GitHub README and YAML front matter.
+
+    Args:
+        readme_path: Path to the repository README.
+        repo_id: Hub model repository id used for metric image URLs.
+
+    Returns:
+        Model card markdown with front matter and Hub-resolvable image links.
+    """
+
+    body = readme_path.read_text(encoding="utf-8")
+    hub_metrics_base = f"https://huggingface.co/{repo_id}/resolve/main/metrics"
+    github_docs_base = "https://raw.githubusercontent.com/pymlex/poetru/main/docs/experiments"
+    body = body.replace("](artifacts/metrics/", f"]({hub_metrics_base}/")
+    body = body.replace("](docs/experiments/", f"]({github_docs_base}/")
+    return f"{HF_MODEL_CARD_FRONTMATTER}\n{body}"
+
+
+def write_hub_readme(destination: Path, readme_path: Path, repo_id: str) -> None:
+    """Writes a Hub model card README next to publish artefacts.
+
+    Args:
+        destination: Output `README.md` path.
+        readme_path: Source GitHub README path.
+        repo_id: Hub model repository id.
+
+    Returns:
+        None.
+    """
+
+    destination.write_text(build_hub_readme(readme_path, repo_id), encoding="utf-8")
+
+
+def upload_hub_readme(
+    readme_path: Path,
+    repo_id: str,
+    token: str | None,
+    commit_message: str = "Sync model card from GitHub README",
+) -> None:
+    """Uploads only the model card README to the Hub repository.
+
+    Args:
+        readme_path: Source GitHub README path.
+        repo_id: Hub model repository id.
+        token: Hugging Face access token.
+        commit_message: Hub commit description.
+
+    Returns:
+        None.
+    """
+
+    card = build_hub_readme(readme_path, repo_id)
+    staging = readme_path.parent / ".hub_readme_upload.md"
+    staging.write_text(card, encoding="utf-8")
+    api = HfApi(token=token)
+    api.upload_file(
+        path_or_fileobj=str(staging),
+        path_in_repo="README.md",
+        repo_id=repo_id,
+        repo_type="model",
+        token=token,
+        commit_message=commit_message,
+    )
+    staging.unlink()
+
+
 def publish_tokenizer(local_dir: Path, repo_id: str, token: str | None) -> None:
     """Uploads `tokenizer.json` to a Hub model repository.
 
@@ -78,9 +159,10 @@ def publish_model_bundle(
     if generated_poems_path.exists():
         shutil.copy2(generated_poems_path, publish_root / "generated_poems.jsonl")
 
-    card_src = Path(__file__).resolve().parent / "MODEL_CARD.md"
-    if card_src.exists():
-        shutil.copy2(card_src, publish_root / "README.md")
+    repo_root = Path(__file__).resolve().parent
+    readme_src = repo_root / "README.md"
+    if readme_src.exists():
+        write_hub_readme(publish_root / "README.md", readme_src, repo_id)
 
     api = HfApi(token=token)
     api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True)
