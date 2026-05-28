@@ -13,7 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from checkpoint_utils import read_checkpoint_meta, resolve_publish_checkpoint
-from hub_utils import load_env, publish_model_bundle, publish_tokenizer
+from hub_utils import load_env, publish_model_bundle
 from plot_utils import plot_loss_linear_and_loglog
 from pydantic_models import ProjectPaths
 
@@ -155,7 +155,6 @@ def sync_progress(
         env = load_env()
         staging_dir = paths.artifacts_dir / "hub_staging"
         staged_ckpt = stage_hub_checkpoint(source_ckpt, staging_dir)
-        publish_tokenizer(paths.tokenizer_dir, env.hf_tokenizer_repo, env.hf_token)
         publish_model_bundle(
             staged_ckpt,
             meta["config"],

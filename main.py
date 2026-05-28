@@ -481,7 +481,7 @@ def publish_hub(root: Path) -> None:
     """Publishes tokenizer and trained model bundle to Hugging Face."""
 
     from checkpoint_utils import read_checkpoint_meta, resolve_publish_checkpoint
-    from hub_utils import load_env, publish_model_bundle, publish_tokenizer
+    from hub_utils import load_env, publish_model_bundle
 
     paths = ProjectPaths(root)
     env = load_env()
@@ -492,7 +492,6 @@ def publish_hub(root: Path) -> None:
     staged_ckpt = staging_dir / "model.pt"
     shutil.copy2(source_ckpt, staged_ckpt)
 
-    publish_tokenizer(paths.tokenizer_dir, env.hf_tokenizer_repo, env.hf_token)
     publish_model_bundle(
         staged_ckpt,
         meta["config"],
