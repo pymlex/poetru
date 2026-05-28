@@ -10,6 +10,7 @@ from data_utils import (
     build_dataloader,
     iter_poetry_texts,
     load_poetry_texts,
+    open_poetry_dataset,
     save_json,
     token_length_histogram,
 )
@@ -167,39 +168,55 @@ def generate_poems(root: Path, count: int | None = None) -> None:
     from trainer import generate_poem
 
     paths = ProjectPaths(root)
+    train_cfg = TrainConfig()
     gen_cfg = GenerationConfig()
     target = count if count is not None else gen_cfg.target_poem_count
+    batch_size = gen_cfg.generation_batch_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
     model, _ = load_checkpoint(paths.checkpoint_dir / "final.pt", device)
     model.eval()
 
-    prompts = [
-        "В тишине ночной",
-        "Я помню чудное мгновенье",
-        "Люблю грозу в начале мая",
-        "Белеет парус одинокий",
-        "Мой дух омрачен",
-        "Осень. Холодные ветры",
-        "Звезда падала",
-        "Ты помнишь",
-    ]
+    rng = __import__("numpy").random.default_rng(train_cfg.seed)
+    ds = open_poetry_dataset(train_cfg.dataset_name, train_cfg.dataset_split, streaming=True)
+    topic_sample: list[str] = []
+    seen_topics: set[str] = set()
+    unique_count = 0
+    for row in tqdm(ds, desc="Collecting topics"):
+        topic = str(row.get("topic", "")).strip()
+        if not topic or topic in seen_topics:
+            continue
+        seen_topics.add(topic)
+        unique_count += 1
+        if len(topic_sample) < target:
+            topic_sample.append(topic)
+            continue
+        replace_idx = int(rng.integers(0, unique_count))
+        if replace_idx < target:
+            topic_sample[replace_idx] = topic
+
+    if len(topic_sample) < target:
+        raise ValueError(f"Found only {len(topic_sample)} unique topics, required {target}.")
+
+    prompts = [f"Тема: {topic}" for topic in topic_sample]
 
     rows = []
-    for idx in tqdm(range(target), desc="Generating poems"):
-        prompt = prompts[idx % len(prompts)]
-        prompt_ids = tokenizer.encode(prompt, add_eos=False)
-        token_ids, _ = generate_poem(
-            model,
-            prompt_ids,
-            eos_id=tokenizer.eos_id,
-            gen_cfg=gen_cfg,
-            device=device,
-            apply_watermark=True,
-        )
-        text = tokenizer.decode(token_ids)
-        rows.append({"id": idx, "prompt": prompt, "text": text, "token_ids": token_ids})
+    for start in tqdm(range(0, target, batch_size), desc="Generating poems"):
+        stop = min(start + batch_size, target)
+        batch_prompts = prompts[start:stop]
+        for idx, prompt in enumerate(batch_prompts, start=start):
+            prompt_ids = tokenizer.encode(prompt, add_eos=False)
+            token_ids, _ = generate_poem(
+                model,
+                prompt_ids,
+                eos_id=tokenizer.eos_id,
+                gen_cfg=gen_cfg,
+                device=device,
+                apply_watermark=True,
+            )
+            text = tokenizer.decode(token_ids)
+            rows.append({"id": idx, "prompt": prompt, "text": text, "token_ids": token_ids})
 
     paths.generated_poems_path.parent.mkdir(parents=True, exist_ok=True)
     with paths.generated_poems_path.open("w", encoding="utf-8") as f:

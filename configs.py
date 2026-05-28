@@ -47,8 +47,9 @@ class TrainConfig:
 class GenerationConfig:
     """Constants shared by poem generation, watermark evaluation, and PCA overlay."""
 
-    target_poem_count: int = 200
-    max_new_tokens: int = 256
+    target_poem_count: int = 1000
+    max_new_tokens: int = 400
+    generation_batch_size: int = 16
     temperature: float = 0.85
     top_p: float = 0.92
     watermark_gamma: float = 0.25
