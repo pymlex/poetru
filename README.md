@@ -38,12 +38,17 @@ Current checkpoint scale is $N = 74{,}899{,}072$.
 Architecture flow diagram:
 
 ```mermaid
-flowchart TB
-    A[Input token ids] --> B[Embedding]
-    B --> C[Dropout]
-    C --> D[Transformer block x12]
-    D --> E[RMSNorm]
-    E --> F[LM head tied with embedding]
+flowchart LR
+    subgraph MainPipeline [ ]
+        direction TB
+        A[Input token ids] --> B[Embedding]
+        B --> C[Dropout]
+        C --> MainD[Transformer block x12]
+        MainD --> E[RMSNorm]
+        E --> F[LM head tied with embedding]
+    end
+
+    MainD --> D
 
     subgraph D[Transformer block]
         direction TB
@@ -54,10 +59,11 @@ flowchart TB
         D5[V up projection]
         D6[RoPE]
         D7[GQA attention]
-        D8[Residual add]
-        D9[RMSNorm]
-        D10[SwiGLU]
-        D11[Residual add]
+
+        subgraph Layers [ ]
+            direction LR
+            D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
+        end
 
         D1 --> D2
         D1 --> D3
@@ -67,7 +73,7 @@ flowchart TB
         D4 --> D6
         D6 --> D7
         D5 --> D7
-        D7 --> D8 --> D9 --> D10 --> D11
+        D7 --> D8
     end
 ```
 Комментарии не пиши. Сделай, чтобы Residual add, RMSNorm, SwiGLU, Residuall add были отдельной горизонтальной группой по стрелочкам внутри соеддиненные
