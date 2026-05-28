@@ -1,5 +1,10 @@
 # Poetru-75M
 
+## Overview
+
+Poetru-75M is a Russian poetry SLM for generation, perplexity tracking, watermark detection, and author-space analysis on `IlyaGusev/stihi_ru`.
+Model and tokenizer are published together in one Hugging Face repository: `pymlex/poetru-75m`.
+
 ## Chinchilla Budget
 
 With corpus token mass on the order of $4.55 \times 10^8$ and 3 epochs:
@@ -150,13 +155,16 @@ Token-length histogram for the processed sample:
 ## Training Setup And Metrics
 
 Hardware and schedule:
-- CPU: Ryzen 9 9900X
-- GPU: RTX 5090 32GB
-- epochs: 3
-- wall-clock: 18h 31m
-- optimiser steps: 240,246
-- effective batch: 64 with `grad_accum_steps = 1`
-- validation every 1000 steps with `eval_batches = 200`
+
+| Item | Value |
+| --- | --- |
+| CPU | Ryzen 9 9900X |
+| GPU | RTX 5090 32GB |
+| epochs | 3 |
+| wall-clock | 18h 31m |
+| optimiser steps | 240,246 |
+| effective batch | 64 with `grad_accum_steps = 1` |
+| validation cadence | every 1000 steps with `eval_batches = 200` |
 
 Final optimisation row from `artifacts/logs/train_history.csv`:
 - train CE window: 3.4006
@@ -187,9 +195,13 @@ Learning-rate trajectory for cosine decay with warmup:
 
 ![Poetru-75M learning rate](artifacts/metrics/learning_rate.png)
 
-Watermark separation quality from generated and real samples:
+Watermark separation quality from generated and real samples. The diagonal line on ROC is the random-guess baseline:
 
 ![Poetru-75M watermark ROC](artifacts/metrics/watermark_roc.png)
+
+Confusion matrix at threshold $z \ge 4.0$:
+
+![Poetru-75M watermark confusion matrix](artifacts/metrics/watermark_confusion_matrix.png)
 
 Author-space PCA projection for generated and author centroids:
 

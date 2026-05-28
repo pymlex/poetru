@@ -289,7 +289,7 @@ def evaluate_watermark(root: Path) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
-    from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score, roc_curve
+    from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, auc, confusion_matrix, f1_score, precision_score, recall_score, roc_curve
 
     from bpe_tokenizer import ByteBPETokenizerWrapper
     from configs import GenerationConfig, TrainConfig
@@ -344,12 +344,22 @@ def evaluate_watermark(root: Path) -> None:
 
     plt.figure(figsize=(8, 6))
     plt.plot(fpr, tpr)
+    plt.plot([0, 1], [0, 1])
     plt.title("Watermark detection ROC")
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.grid(alpha=0.5)
     plt.tight_layout()
     plt.savefig(paths.metrics_dir / "watermark_roc.png", dpi=160)
+    plt.close()
+
+    cm = confusion_matrix(y, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot(cmap="Blues")
+    plt.title("Watermark confusion matrix")
+    plt.grid(alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(paths.metrics_dir / "watermark_confusion_matrix.png", dpi=160)
     plt.close()
 
     pd.DataFrame({"label": y, "z_score": s}).to_csv(paths.metrics_dir / "watermark_scores.csv", index=False)

@@ -83,7 +83,8 @@ From uploaded `metrics/`:
 ![Training loss](metrics/loss_curve.png)
 ![Training loss log-step log-log-loss](metrics/loss_curve_loglog.png)
 ![Learning rate](metrics/learning_rate.png)
-![Watermark ROC](metrics/watermark_roc.png)
+![Watermark ROC with random baseline](metrics/watermark_roc.png)
+![Watermark confusion matrix](metrics/watermark_confusion_matrix.png)
 ![Author PCA](metrics/author_pca.png)
 
 ## 25M Pilot

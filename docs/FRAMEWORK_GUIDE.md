@@ -19,7 +19,7 @@ cp .env.example .env
 | --- | --- |
 | `HF_TOKEN` | Hugging Face access token |
 | `HF_MODEL_REPO` | model repository id |
-| `HF_TOKENIZER_REPO` | tokenizer repository id |
+| `HF_TOKENIZER_REPO` | keep equal to `HF_MODEL_REPO` for single-repo layout |
 | `GITHUB_TOKEN` | optional token for scripted GitHub APIs |
 
 ## Core Pipeline Commands
