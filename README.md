@@ -1,32 +1,34 @@
 # Poetru-75M
 
-Poetru-75M is a Russian poetry SLM trained from scratch on [`IlyaGusev/stihi_ru`](https://huggingface.co/datasets/IlyaGusev/stihi_ru) with ByteLevel BPE, RoPE, GQA with MLA-style latent KV, SwiGLU, RMSNorm, tied embeddings, and watermark-aware decoding.  
-The Hugging Face target is a single model repository [`pymlex/poetru-75m`](https://huggingface.co/pymlex/poetru-75m), including `model.pt` and `tokenizer/tokenizer.json` in one bundle.
+Poetru-75M is a Russian poetry SLM for generation and watermark-aware attribution.  
+GitHub repository: [github.com/pymlex/poetru](https://github.com/pymlex/poetru)  
+Hugging Face model: [pymlex/poetru-75m](https://huggingface.co/pymlex/poetru-75m)
+
+## Full Documentation
+
+All operational commands, pipeline stages, resume flow, publish flow, and watermark configuration are documented in `docs/FRAMEWORK_GUIDE.md`.
 
 ## Chinchilla Budget
 
-Corpus size in BPE tokens is on the order of $4.55 \times 10^8$.  
-With 3 epochs:
+With corpus token mass on the order of $4.55 \times 10^8$ and 3 epochs:
 
 $$
 T_{\mathrm{train}} \approx 3 \cdot 4.55 \times 10^8 \approx 1.37 \times 10^9.
 $$
 
-Chinchilla scaling with 20 tokens per parameter gives
+Compute-optimal scale:
 
 $$
 N_* \approx \frac{T_{\mathrm{train}}}{20} \approx 6.8 \times 10^7.
 $$
 
-Current checkpoint contains
+Current checkpoint scale from `artifacts/metrics/model_param_count.json`:
 
 $$
-N \approx 7.4899072 \times 10^7
+N = 74{,}899{,}072.
 $$
 
-trainable parameters from `artifacts/metrics/model_param_count.json`.
-
-## Model Architecture
+## Architecture
 
 | Component | Value |
 | --- | ---: |
@@ -39,39 +41,69 @@ trainable parameters from `artifacts/metrics/model_param_count.json`.
 | Head dim | 80 |
 | Latent KV dim | 640 |
 | FFN hidden | 1728 |
-| Vocab | 24,000 |
+| Vocab size | 24,000 |
+
+Architecture flow diagram:
 
 ```mermaid
 flowchart TB
-    A[Input token ids] --> B[Embedding matrix tied with LM head]
+    A[Input token ids] --> B[Embedding]
     B --> C[Dropout]
     C --> D[Transformer block x12]
     D --> E[RMSNorm]
-    E --> F[LM head logits]
+    E --> F[LM head tied with embedding]
 
     subgraph D[Transformer block]
-        D1[RMSNorm] --> D2[Q projection]
-        D1 --> D3[KV down projection]
-        D3 --> D4[K up projection]
-        D3 --> D5[V up projection]
-        D2 --> D6[RoPE]
+        direction TB
+        D1[RMSNorm]
+        D2[Q projection]
+        D3[KV down projection]
+        D4[K up projection]
+        D5[V up projection]
+        D6[RoPE]
+        D7[GQA attention]
+        D8[Residual add]
+        D9[RMSNorm]
+        D10[SwiGLU]
+        D11[Residual add]
+
+        D1 --> D2
+        D1 --> D3
+        D3 --> D4
+        D3 --> D5
+        D2 --> D6
         D4 --> D6
-        D6 --> D7[GQA attention]
+        D6 --> D7
         D5 --> D7
-        D7 --> D8[Residual add]
-        D8 --> D9[RMSNorm]
-        D9 --> D10[SwiGLU MLP]
-        D10 --> D11[Residual add]
+        D7 --> D8 --> D9 --> D10 --> D11
     end
 ```
 
-RoPE frequencies:
+RoPE angular frequencies:
 
 $$
-\theta_k = \theta_0^{-2k/d_h}, \quad \theta_0 = 10000, \quad d_h = 80.
+\theta_k = \theta_0^{-2k/d_h}, \quad \theta_0=10000, \quad d_h=80.
 $$
 
-SwiGLU block:
+RoPE rotation matrix for pair $(2k,2k+1)$ at position $m$:
+
+$$
+\begin{pmatrix}
+q'_{2k}\\
+q'_{2k+1}
+\end{pmatrix}
+=
+\begin{pmatrix}
+\cos(m\theta_k) & -\sin(m\theta_k)\\
+\sin(m\theta_k) & \cos(m\theta_k)
+\end{pmatrix}
+\begin{pmatrix}
+q_{2k}\\
+q_{2k+1}
+\end{pmatrix}.
+$$
+
+SwiGLU:
 
 $$
 \mathrm{SwiGLU}(x) = W_2\left(\mathrm{SiLU}(W_1x)\odot W_3x\right).
@@ -79,9 +111,13 @@ $$
 
 ## Digital Watermark
 
-Generation applies a green-list logit bias with $(\gamma,\delta)=(0.25,2.0)$.
+Generation bias parameters:
 
-For step $t$, vocabulary $\mathcal{V}$ and green set $G_t\subset\mathcal{V}$:
+$$
+\gamma = 0.25, \quad \delta = 2.0.
+$$
+
+Logit update:
 
 $$
 \ell'_t(v)=
@@ -91,11 +127,13 @@ $$
 \end{cases}
 $$
 
+Sampling distribution:
+
 $$
 p_t(v)=\frac{\exp(\ell'_t(v))}{\sum_{u\in\mathcal{V}}\exp(\ell'_t(u))}.
 $$
 
-Detection with $T$ generated positions and green hit count $K$:
+Detection statistic:
 
 $$
 z=\frac{K-\gamma T}{\sqrt{T\gamma(1-\gamma)}}.
@@ -103,10 +141,9 @@ $$
 
 ## Dataset
 
-Source split is `train` from `IlyaGusev/stihi_ru`.  
-Tokenisation uses ByteLevel BPE with truncation to 512 tokens per poem for train and validation batches.
+Train source is `IlyaGusev/stihi_ru` with truncation to 512 BPE tokens per poem in training batches.
 
-Token-length statistics from `artifacts/metrics/token_length_stats.json`:
+Token-length distribution summary:
 
 | Statistic | Value |
 | --- | ---: |
@@ -116,55 +153,69 @@ Token-length statistics from `artifacts/metrics/token_length_stats.json`:
 | p50 | 135 |
 | p75 | 196 |
 
+Token-length histogram for the processed sample:
+
 ![Token length histogram](artifacts/metrics/token_length_hist.png)
 
-## Training Setup And Results
+## Training Setup And Metrics
 
-Run setup:
+Hardware and schedule:
 - CPU: Ryzen 9 9900X
 - GPU: RTX 5090 32GB
 - epochs: 3
-- optimiser steps: 240,246
 - wall-clock: 18h 31m
+- optimiser steps: 240,246
 - effective batch: 64 with `grad_accum_steps = 1`
-- validation loss evaluated every 1000 steps on `eval_batches = 200`
+- validation every 1000 steps with `eval_batches = 200`
 
-Final values from `artifacts/logs/train_history.csv`:
+Final optimisation row from `artifacts/logs/train_history.csv`:
+- train CE window: 3.4006
+- val CE: 3.3099
+- LR: $3.0\times 10^{-5}$
 
-| Metric | Value |
-| --- | ---: |
-| final train CE window | 3.4006 |
-| final validation CE | 3.3099 |
-| final LR | $3.0 \times 10^{-5}$ |
-
-Perplexity from `artifacts/metrics/perplexity.json`:
+Perplexity and watermark metrics:
 
 | Metric | Value |
 | --- | ---: |
-| validation loss | 3.2713 |
+| val loss | 3.2713 |
 | perplexity | 26.3448 |
+| watermark accuracy | 0.963 |
+| watermark precision | 1.000 |
+| watermark recall | 0.926 |
+| watermark F1 | 0.9616 |
+| watermark ROC-AUC | 0.9992 |
 
-Watermark detection from `artifacts/metrics/watermark_metrics.json`:
+Loss curve in native scale. Train CE decreases from 6.1751 to 3.4006, validation CE from 5.3037 to 3.3099:
 
-| Metric | Value |
-| --- | ---: |
-| accuracy | 0.963 |
-| precision | 1.000 |
-| recall | 0.926 |
-| F1 | 0.9616 |
-| ROC-AUC | 0.9992 |
+![Poetru-75M loss curve](artifacts/metrics/loss_curve.png)
 
-![Train and validation CE](artifacts/metrics/loss_curve.png)
-![Learning rate schedule](artifacts/metrics/learning_rate.png)
-![Watermark ROC](artifacts/metrics/watermark_roc.png)
-![Author PCA](artifacts/metrics/author_pca.png)
+Chinchilla-style coordinates with $\log(\mathrm{step})$ and $\log\log L$:
 
-## Pilot 25M Experiment
+![Poetru-75M log-step and log-log-loss](artifacts/metrics/loss_curve_loglog.png)
 
-Poetru-25M ran first as a scaling pilot and reached step 53,000 with monotonic improvement in train and validation CE.  
-The current 75M checkpoint is the main branch target and shows stronger generalisation on the validation curve.
+Learning-rate trajectory for cosine decay with warmup:
+
+![Poetru-75M learning rate](artifacts/metrics/learning_rate.png)
+
+Watermark separation quality from generated and real samples:
+
+![Poetru-75M watermark ROC](artifacts/metrics/watermark_roc.png)
+
+Author-space PCA projection for generated and author centroids:
+
+![Poetru-75M author PCA](artifacts/metrics/author_pca.png)
+
+## 25M Pilot Experiment
+
+Poetru-25M ran as a pilot to calibrate scaling.  
+Current 75M configuration is the active line for stronger generalisation.
+
+25M linear loss curve:
 
 ![Poetru-25M linear loss](docs/experiments/poetru_25m_loss_linear.png)
+
+25M Chinchilla-style log-step and log-log-loss:
+
 ![Poetru-25M log-step and log-log-loss](docs/experiments/poetru_25m_loss_loglog.png)
 
 ## Inference In Colab
@@ -206,18 +257,6 @@ token_ids, _ = generate_poem(
 
 text = tokenizer.decode(token_ids)
 print(text)
-```
-
-## Core Commands
-
-```bash
-python main.py train_tokenizer --root .
-python main.py train_model --root .
-python scripts/generate_poems.py --root . --count 1000
-python main.py perplexity --root .
-python scripts/evaluate_watermark.py
-python main.py author_pca --root .
-python main.py publish --root .
 ```
 
 ## License

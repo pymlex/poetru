@@ -12,7 +12,9 @@ datasets:
 
 # poetru-75m
 
-Poetru-75M is a Russian poetry SLM trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru) with ByteLevel BPE, RoPE, GQA, MLA-style latent KV compression, SwiGLU blocks, and tied embeddings.
+Poetru-75M is a Russian poetry SLM trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru).
+
+GitHub source: [github.com/pymlex/poetru](https://github.com/pymlex/poetru)
 
 ## Architecture
 
@@ -28,7 +30,7 @@ Poetru-75M is a Russian poetry SLM trained on [IlyaGusev/stihi_ru](https://huggi
 | Vocabulary | 24000 ByteLevel BPE |
 | Positional encoding | RoPE base 10000 |
 
-Chinchilla token budget:
+Chinchilla budget:
 
 $$
 T_{\mathrm{train}} \approx 1.37 \times 10^{9}
@@ -79,6 +81,7 @@ From uploaded `metrics/`:
 
 ![Token length histogram](metrics/token_length_hist.png)
 ![Training loss](metrics/loss_curve.png)
+![Training loss log-step log-log-loss](metrics/loss_curve_loglog.png)
 ![Learning rate](metrics/learning_rate.png)
 ![Watermark ROC](metrics/watermark_roc.png)
 ![Author PCA](metrics/author_pca.png)
@@ -88,6 +91,14 @@ From uploaded `metrics/`:
 Poetru-25M was trained as a pilot before the current checkpoint. The 75M configuration is the active model line for stronger generalisation.
 
 ## Inference
+
+Install and run from GitHub:
+
+```bash
+git clone https://github.com/pymlex/poetru.git
+cd poetru
+pip install -r requirements.txt
+```
 
 ```python
 from pathlib import Path
@@ -105,4 +116,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = ByteBPETokenizerWrapper.from_file(root / "artifacts/tokenizer/tokenizer.json")
 model, _ = load_checkpoint(root / "artifacts/checkpoints/final.pt", device)
 model.eval()
+
+prompt_ids = tokenizer.encode("Раз, два, три", add_eos=False)
+token_ids, _ = generate_poem(
+    model,
+    prompt_ids,
+    eos_id=tokenizer.eos_id,
+    gen_cfg=GenerationConfig(),
+    device=device,
+    apply_watermark=True,
+)
+print(tokenizer.decode(token_ids))
 ```
