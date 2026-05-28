@@ -377,12 +377,14 @@ def author_pca(root: Path) -> None:
     train_cfg = TrainConfig()
     tcfg = TransformerConfig()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    setup_bar = tqdm(total=4, desc="Author PCA setup")
 
     from collections import defaultdict
 
     from data_utils import open_poetry_dataset
 
     ds = open_poetry_dataset(train_cfg.dataset_name, train_cfg.dataset_split, streaming=True)
+    setup_bar.update(1)
     author_to_texts: dict[str, list[str]] = defaultdict(list)
     author_counts: dict[str, int] = defaultdict(int)
 
@@ -402,10 +404,12 @@ def author_pca(root: Path) -> None:
         if count >= ap_cfg.min_poems_per_author
     ]
     eligible = sorted(eligible, key=lambda a: author_counts[a], reverse=True)[: ap_cfg.max_authors]
+    setup_bar.update(1)
 
     tokenizer = ByteBPETokenizerWrapper.from_file(paths.tokenizer_dir / "tokenizer.json")
     model, _ = load_checkpoint(paths.checkpoint_dir / "final.pt", device)
     model.eval()
+    setup_bar.update(1)
 
     author_vectors = []
     author_names = []
@@ -437,6 +441,8 @@ def author_pca(root: Path) -> None:
         for line in f:
             generated_rows.append(json.loads(line))
     generated_rows = generated_rows[: gen_cfg.target_poem_count]
+    setup_bar.update(1)
+    setup_bar.close()
 
     gen_vectors = []
     for row in tqdm(generated_rows, desc="Generated embeddings"):
