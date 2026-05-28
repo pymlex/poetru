@@ -2,28 +2,23 @@
 
 ## Overview
 
-Poetru-75M is a Russian poetry SLM for generation, perplexity tracking, watermark detection, and author-space analysis on `IlyaGusev/stihi_ru`.
-Model and tokenizer are published together in one Hugging Face repository: `pymlex/poetru-75m`.
+Poetru-75M is a Russian poetry SLM for generation, perplexity tracking, watermark detection, and author-space analysis on `IlyaGusev/stihi_ru`. Model and tokenizer are published the Hugging Face repository: `pymlex/poetru-75m`.
 
 ## Chinchilla Budget
 
-With corpus token mass on the order of $4.55 \times 10^8$ and 3 epochs:
+This model has 75M parameters. With corpus token mass on the order of $4.55 \times 10^8$ and 3 epochs:
 
 $$
 T_{\mathrm{train}} \approx 3 \cdot 4.55 \times 10^8 \approx 1.37 \times 10^9.
 $$
 
-Compute-optimal scale:
+Compute-optimal scale with the Chinchilla laws taken in account:
 
 $$
 N_* \approx \frac{T_{\mathrm{train}}}{20} \approx 6.8 \times 10^7.
 $$
 
-Current checkpoint scale from `artifacts/metrics/model_param_count.json`:
-
-$$
-N = 74{,}899{,}072.
-$$
+Current checkpoint scale is $N = 74{,}899{,}072$.
 
 ## Architecture
 
@@ -42,7 +37,7 @@ $$
 
 Architecture flow diagram:
 
-```mermaid
+```
 flowchart TB
     A[Input token ids] --> B[Embedding]
     B --> C[Dropout]
@@ -59,10 +54,11 @@ flowchart TB
         D5[V up projection]
         D6[RoPE]
         D7[GQA attention]
-        D8[Residual add]
-        D9[RMSNorm]
-        D10[SwiGLU]
-        D11[Residual add]
+
+        subgraph FeedForward [ ]
+            direction LR
+            D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
+        end
 
         D1 --> D2
         D1 --> D3
@@ -72,9 +68,9 @@ flowchart TB
         D4 --> D6
         D6 --> D7
         D5 --> D7
-        D7 --> D8 --> D9 --> D10 --> D11
+        D7 --> D8
     end
-```
+
 
 RoPE angular frequencies:
 
