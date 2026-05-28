@@ -43,32 +43,30 @@ flowchart TB
 
     subgraph D[Transformer block]
         direction TB
-        
         D1[RMSNorm]
         
-        subgraph Projections [ ]
-            direction LR
-            D2[Q projection]
-            D3[KV down projection] --> D4[K up projection]
-            D3 --> D5[V up projection]
-        end
+        D2[Q projection]
+        D3[KV down projection]
+        D2 ~~~ D3
         
-        subgraph Attention [ ]
-            direction LR
-            D6[RoPE] --> D7[GQA attention]
-            D5_att[V up] --> D7
-        end
+        D4[K up projection]
+        D5[V up projection]
+        D4 ~~~ D5
+        
+        D6[RoPE]
+        D7[GQA attention]
+        D6 --> D7
 
         subgraph Layers [ ]
             direction LR
             D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
         end
 
-        D1 --> Projections
-        D2 --> D6
-        D4 --> D6
-        D5 --> D5_att
-        Attention --> D8
+        D1 --> D2 & D3
+        D3 --> D4 & D5
+        D2 & D4 --> D6
+        D5 --> D7
+        D7 --> D8
     end
 ```
 
