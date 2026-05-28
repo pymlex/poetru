@@ -10,11 +10,15 @@ datasets:
   - IlyaGusev/stihi_ru
 ---
 
-# poetru-75m
+# Poetru-75M
 
-Poetru-75M is a Russian poetry SLM trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru).
+## Overview
+
+Poetru-75M is a Russian poetry SLM trained on [IlyaGusev/stihi_ru](https://huggingface.co/datasets/IlyaGusev/stihi_ru). The model line targets next-token prediction with 512-token context, watermark-aware decoding, and post-training validation by perplexity, ROC, and author-space geometry.
 
 GitHub source: [github.com/pymlex/poetru](https://github.com/pymlex/poetru)
+
+---
 
 ## Architecture
 
@@ -56,6 +60,8 @@ $$
 z=\frac{K-\gamma T}{\sqrt{T\gamma(1-\gamma)}}
 $$
 
+---
+
 ## Training Setup
 
 - CPU: Ryzen 9 9900X
@@ -86,6 +92,8 @@ From uploaded `metrics/`:
 ![Watermark ROC with random baseline](metrics/watermark_roc.png)
 ![Watermark confusion matrix](metrics/watermark_confusion_matrix.png)
 ![Author PCA](metrics/author_pca.png)
+
+---
 
 ## 25M Pilot
 
@@ -129,3 +137,11 @@ token_ids, _ = generate_poem(
 )
 print(tokenizer.decode(token_ids))
 ```
+
+---
+
+## References
+
+- [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
+- [A Watermark for Large Language Models](https://arxiv.org/abs/2301.10226)
+- [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)

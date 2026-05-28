@@ -24,21 +24,32 @@ cp .env.example .env
 
 ## Core Pipeline Commands
 
-```bash
-python main.py train_tokenizer --root .
-python main.py train_model --root .
-python scripts/generate_poems.py --root . --count 1000
-python main.py perplexity --root .
-python scripts/evaluate_watermark.py
-python main.py author_pca --root .
-python main.py publish --root .
-```
+`python main.py train_tokenizer --root .`  
+Trains ByteLevel BPE and writes `artifacts/tokenizer/tokenizer.json` plus token-length plots and summary stats.
 
-Single pipeline call:
+`python main.py train_model --root .`  
+Runs full optimisation from step 0 with config defaults. Writes periodic `step_*.pt`, `final.pt`, and `artifacts/logs/train_history.csv`.
 
-```bash
-python main.py all --root .
-```
+`python main.py train_model --root . --resume latest`  
+Restores optimizer, scheduler, epoch, and step from newest checkpoint in `artifacts/checkpoints`.
+
+`python scripts/generate_poems.py --root . --count 1000`  
+Generates watermarked continuations and writes `artifacts/generated_poems.jsonl`. `--count` overrides `GenerationConfig.target_poem_count`.
+
+`python main.py perplexity --root .`  
+Computes validation loss and perplexity on a capped number of batches and writes `artifacts/metrics/perplexity.json`.
+
+`python scripts/evaluate_watermark.py`  
+Builds watermark metrics, ROC curve, confusion matrix, and `watermark_scores.csv`.
+
+`python main.py author_pca --root .`  
+Builds author and generated embedding sets, PCA projection figure, and permutation-test significance statistics.
+
+`python main.py publish --root .`  
+Publishes checkpoint, tokenizer, metrics, generated poems, and model card to Hugging Face model repo.
+
+`python main.py all --root .`  
+Runs tokenizer, training, generation, perplexity, watermark evaluation, author PCA, and publish in sequence.
 
 ## Resume Training
 

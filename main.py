@@ -357,7 +357,6 @@ def evaluate_watermark(root: Path) -> None:
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot(cmap="Blues")
     plt.title("Watermark confusion matrix")
-    plt.grid(alpha=0.5)
     plt.tight_layout()
     plt.savefig(paths.metrics_dir / "watermark_confusion_matrix.png", dpi=160)
     plt.close()
@@ -466,6 +465,31 @@ def author_pca(root: Path) -> None:
 
     gen_matrix = np.stack(gen_vectors, axis=0)
     np.savez(paths.metrics_dir / "generated_embeddings.npz", embeddings=gen_matrix)
+
+    rng = np.random.default_rng(train_cfg.seed)
+    n_auth = author_matrix.shape[0]
+    n_gen = gen_matrix.shape[0]
+    pooled = np.concatenate([author_matrix, gen_matrix], axis=0)
+    observed_mean_distance = float(np.linalg.norm(author_matrix.mean(axis=0) - gen_matrix.mean(axis=0)))
+    resamples = 5000
+    ge_count = 0
+    for _ in tqdm(range(resamples), desc="Permutation p-value"):
+        perm = rng.permutation(n_auth + n_gen)
+        x = pooled[perm[:n_auth]]
+        y = pooled[perm[n_auth:]]
+        perm_dist = np.linalg.norm(x.mean(axis=0) - y.mean(axis=0))
+        ge_count += int(perm_dist >= observed_mean_distance)
+    p_value = float((ge_count + 1) / (resamples + 1))
+    save_json(
+        paths.metrics_dir / "author_pca_stats.json",
+        {
+            "author_count": int(n_auth),
+            "generated_count": int(n_gen),
+            "mean_embedding_distance": observed_mean_distance,
+            "permutation_p_value": p_value,
+            "resamples": resamples,
+        },
+    )
 
     all_matrix = np.concatenate([author_matrix, gen_matrix], axis=0)
     pca = PCA(n_components=2, random_state=train_cfg.seed)

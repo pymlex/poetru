@@ -54,6 +54,7 @@ flowchart LR
 ```
 
 ### RoPE
+RoPE is used to encode relative position directly in attention space without learned absolute position embeddings. This keeps extrapolation to longer rhythm patterns more stable and preserves translation structure in the query-key dot product. The formulation follows Rotary Position Embedding from RoFormer.
 
 RoPE angular frequencies:
 
@@ -78,12 +79,17 @@ q_{2k+1}
 $$
 
 ### SwiGLU activation
+SwiGLU is used in the feed-forward block because the gated multiplicative path preserves stronger token-selective dynamics than a plain two-layer MLP and consistently improves language modelling quality at the same width.
+
+SwiGLU definition:
 
 $$
 \mathrm{SwiGLU}(x) = W_2\left(\mathrm{SiLU}(W_1x)\odot W_3x\right).
 $$
 
 ## Digital Watermark
+
+Digital watermarking follows the soft green-list construction from [Kirchenbauer et al., 2023](https://arxiv.org/abs/2301.10226). For each decoding step, a pseudo-random subset of vocabulary ids receives a positive logit bias, so generated text carries a detectable statistical signature while preserving fluent sampling.
 
 Generation bias parameters:
 
@@ -143,10 +149,13 @@ Hardware and schedule:
 | effective batch | 64 with `grad_accum_steps = 1` |
 | validation cadence | every 1000 steps with `eval_batches = 200` |
 
-Final optimisation state:
-- train CE window: 3.4006
-- val CE: 3.3099
-- LR: $3.0\times 10^{-5}$
+Final optimisation state from `artifacts/logs/train_history.csv`:
+
+| Quantity | Value |
+| --- | ---: |
+| train CE window | 3.4006 |
+| val CE | 3.3099 |
+| LR | $3.0\times 10^{-5}$ |
 
 Perplexity and watermark metrics:
 
@@ -183,6 +192,15 @@ Confusion matrix at threshold $z \ge 4.0$:
 Author-space PCA projection for generated and author centroids:
 
 ![Poetru-75M author PCA](artifacts/metrics/author_pca.png)
+
+Statistical difference between author and generated embedding distributions was measured with a permutation test over mean embedding shift:
+
+| Quantity | Value |
+| --- | ---: |
+| author samples | 1000 |
+| generated samples | 1000 |
+| mean-embedding distance | 22.3428 |
+| p-value | 0.00020 |
 
 ## 25M Pilot Experiment
 
@@ -244,3 +262,9 @@ print(text)
 ## License
 
 GPL-3.0, see `LICENSE`.
+
+## References
+
+- [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
+- [A Watermark for Large Language Models](https://arxiv.org/abs/2301.10226)
+- [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)
