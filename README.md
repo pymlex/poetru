@@ -221,13 +221,19 @@ All operational commands, pipeline stages, resume flow, publish flow, and waterm
 
 ## Inference In Colab
 
+Install the dependencies. 
+
 ```python
 !git clone https://github.com/pymlex/poetru.git
 %cd /content/poetru
 !pip install -q -r requirements.txt
 import sys
 sys.path.insert(0, "/content/poetru")
+```
 
+Load and configure the model and its tokenizer.
+
+```python
 from pathlib import Path
 import torch
 from hub_utils import download_inference_artifacts
@@ -244,6 +250,11 @@ tokenizer = ByteBPETokenizerWrapper.from_file(root / "artifacts/tokenizer/tokeni
 model, _ = load_checkpoint(root / "artifacts/checkpoints/final.pt", device)
 model.eval()
 gen_cfg = GenerationConfig()
+```
+
+Generate a poem based on the provided beginning.
+
+```python
 prompt = "Раз, два, три"
 prompt_ids = tokenizer.encode(prompt, add_eos=False)
 
@@ -260,10 +271,6 @@ text = tokenizer.decode(token_ids)
 print(text)
 ```
 
-## License
-
-GPL-3.0, see `LICENSE`.
-
 ## Citation
 
 If you found this project useful, please cite it as:
@@ -278,6 +285,8 @@ If you found this project useful, please cite it as:
   note    = {Hugging Face model pymlex/poetru-75m}
 }
 ```
+
+The code is under GPL-3.0 license.
 
 ## References
 
