@@ -39,11 +39,14 @@ Architecture flow diagram:
 
 ```mermaid
 flowchart TB
-    A[Input token ids] --> B[Embedding]
-    B --> C[Dropout]
-    C --> D[Transformer block x12]
-    D --> E[RMSNorm]
-    E --> F[LM head tied with embedding]
+    A[Input token ids]
+    B[Embedding]
+    C[Dropout]
+    D[Transformer block x12]
+    E[RMSNorm]
+    F[LM head tied with embedding]
+
+    A --> B --> C --> D --> E --> F
 ```
 
 Transformer block:
