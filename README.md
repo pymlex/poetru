@@ -263,8 +263,51 @@ print(text)
 
 GPL-3.0, see `LICENSE`.
 
+## Citation
+
+```bibtex
+@software{zyukov2026poetru75,
+  author  = {Zyukov, Alex},
+  title   = {{Poetru-75M}: A Russian Poetry Language Model},
+  year    = {2026},
+  url     = {https://github.com/pymlex/poetru},
+  version = {1.0},
+  note    = {Hugging Face model pymlex/poetru-75m}
+}
+```
+
 ## References
 
-- [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
-- [A Watermark for Large Language Models](https://arxiv.org/abs/2301.10226)
-- [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)
+Full bibliography: `references.bib`.
+
+```bibtex
+@misc{su2021roformer,
+  title         = {{RoFormer}: Enhanced Transformer with Rotary Position Embedding},
+  author        = {Jianlin Su and Yu Lu and Shengfeng Pan and Ahmed Murtadha and Bo Wen and Yunfeng Liu},
+  year          = {2021},
+  eprint        = {2104.09864},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2104.09864}
+}
+
+@misc{kirchenbauer2023watermark,
+  title         = {A Watermark for Large Language Models},
+  author        = {John Kirchenbauer and Jonas Geiping and Yuxin Wen and Jonathan Katz and Ian Miers and Tom Goldstein},
+  year          = {2023},
+  eprint        = {2301.10226},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2301.10226}
+}
+
+@misc{hoffmann2022chinchilla,
+  title         = {Training Compute-Optimal Large Language Models},
+  author        = {Jordan Hoffmann and Sebastian Borgeaud and Arthur Mensch and Elena Buchatskaya and Trevor Cai and Eliza Rutherford and Diego de Las Casas and Lisa Anne Hendricks and Johannes Welbl and Aidan Clark and Tom Hennigan and Eric Noland and Katie Millican and George van den Driessche and Bogdan Damoc and Aurelia Guy and Simon Osindero and Karen Simonyan and Erich Elsen and Jack W. Rae and Oriol Vinyals and Laurent Sifre},
+  year          = {2022},
+  eprint        = {2203.15556},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2203.15556}
+}
+```
