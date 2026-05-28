@@ -49,28 +49,12 @@ flowchart TB
 Transformer block:
 
 ```mermaid
-flowchart TB
-    D1[RMSNorm]
-    D2[Q projection]
-    D3[KV down projection]
-    D4[K up projection]
-    D5[V up projection]
-    D6[RoPE]
-    D7[GQA attention]
-    D8[Residual add]
-    D9[RMSNorm]
-    D10[SwiGLU]
-    D11[Residual add]
+flowchart LR
+    D1[RMSNorm] --> D2[Q projection] & D3[KV down projection]
+    D3 --> D4[K up projection] & D5[V up projection]
+    D2 & D4 --> D6[RoPE]
+    D6 & D5 --> D7[GQA attention] --> D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
 
-    D1 --> D2
-    D1 --> D3
-    D3 --> D4
-    D3 --> D5
-    D2 --> D6
-    D4 --> D6
-    D6 --> D7
-    D5 --> D7
-    D7 --> D8 --> D9 --> D10 --> D11
 ```
 
 RoPE angular frequencies:
