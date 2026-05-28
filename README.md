@@ -35,14 +35,14 @@ Current checkpoint scale is $N = 74{,}899{,}072$.
 | FFN hidden | 1728 |
 | Vocab size | 24,000 |
 
-Architecture flow diagram:
+### Architecture flow diagram
 
 ```mermaid
 flowchart LR
     A[Input token ids] --> B[Embedding] --> C[Dropout] --> D[Transformer block x12] --> E[RMSNorm] --> F[LM head tied with embedding]
 ```
 
-Transformer block:
+### Transformer block
 
 ```mermaid
 flowchart LR
@@ -52,6 +52,8 @@ flowchart LR
     D6 & D5 --> D7[GQA attention] --> D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
 
 ```
+
+### RoPE
 
 RoPE angular frequencies:
 
@@ -75,7 +77,7 @@ q_{2k+1}
 \end{pmatrix}.
 $$
 
-SwiGLU:
+### SwiGLU activation
 
 $$
 \mathrm{SwiGLU}(x) = W_2\left(\mathrm{SiLU}(W_1x)\odot W_3x\right).
@@ -113,9 +115,7 @@ $$
 
 ## Dataset
 
-Train source is `IlyaGusev/stihi_ru` with truncation to 512 BPE tokens per poem in training batches.
-
-Token-length distribution summary:
+Train source is `IlyaGusev/stihi_ru` with truncation to 512 BPE tokens per poem in training batches. Token-length distribution summary:
 
 | Statistic | Value |
 | --- | ---: |
@@ -143,7 +143,7 @@ Hardware and schedule:
 | effective batch | 64 with `grad_accum_steps = 1` |
 | validation cadence | every 1000 steps with `eval_batches = 200` |
 
-Final optimisation row from `artifacts/logs/train_history.csv`:
+Final optimisation state:
 - train CE window: 3.4006
 - val CE: 3.3099
 - LR: $3.0\times 10^{-5}$
@@ -186,8 +186,7 @@ Author-space PCA projection for generated and author centroids:
 
 ## 25M Pilot Experiment
 
-Poetru-25M ran as a pilot to calibrate scaling.  
-Current 75M configuration is the active line for stronger generalisation.
+Poetru-25M ran as a pilot to calibrate scaling. Current 75M configuration showed 3 times better generalisation, surpassing the compact version.
 
 25M linear loss curve:
 
