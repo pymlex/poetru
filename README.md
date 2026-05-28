@@ -1,13 +1,5 @@
 # Poetru-75M
 
-Poetru-75M is a Russian poetry SLM for generation and watermark-aware attribution.  
-GitHub repository: [github.com/pymlex/poetru](https://github.com/pymlex/poetru)  
-Hugging Face model: [pymlex/poetru-75m](https://huggingface.co/pymlex/poetru-75m)
-
-## Full Documentation
-
-All operational commands, pipeline stages, resume flow, publish flow, and watermark configuration are documented in `docs/FRAMEWORK_GUIDE.md`.
-
 ## Chinchilla Budget
 
 With corpus token mass on the order of $4.55 \times 10^8$ and 3 epochs:
@@ -89,16 +81,14 @@ RoPE rotation matrix for pair $(2k,2k+1)$ at position $m$:
 
 $$
 \begin{pmatrix}
-q'_{2k}\\
+q'_{2k}\\\\
 q'_{2k+1}
-\end{pmatrix}
-=
-\begin{pmatrix}
-\cos(m\theta_k) & -\sin(m\theta_k)\\
+\end{pmatrix}=\begin{pmatrix}
+\cos(m\theta_k) & -\sin(m\theta_k)\\\\
 \sin(m\theta_k) & \cos(m\theta_k)
 \end{pmatrix}
 \begin{pmatrix}
-q_{2k}\\
+q_{2k}\\\\
 q_{2k+1}
 \end{pmatrix}.
 $$
@@ -217,6 +207,10 @@ Current 75M configuration is the active line for stronger generalisation.
 25M Chinchilla-style log-step and log-log-loss:
 
 ![Poetru-25M log-step and log-log-loss](docs/experiments/poetru_25m_loss_loglog.png)
+
+## Full Documentation
+
+All operational commands, pipeline stages, resume flow, publish flow, and watermark configuration are documented in `docs/FRAMEWORK_GUIDE.md`.
 
 ## Inference In Colab
 
