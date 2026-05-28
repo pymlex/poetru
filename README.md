@@ -39,37 +39,38 @@ Architecture flow diagram:
 
 ```mermaid
 flowchart TB
-    A[Input token ids] --> B[Embedding] --> C[Dropout] --> D[Transformer block x12] --> E[RMSNorm] --> F[LM head tied with embedding]
+    A[Input token ids] --> B[Embedding]
+    B --> C[Dropout]
+    C --> D[Transformer block x12]
+    D --> E[RMSNorm]
+    E --> F[LM head tied with embedding]
 
     subgraph D[Transformer block]
         direction TB
         D1[RMSNorm]
-        
         D2[Q projection]
         D3[KV down projection]
-        D2 ~~~ D3
-        
         D4[K up projection]
         D5[V up projection]
-        D4 ~~~ D5
-        
         D6[RoPE]
         D7[GQA attention]
+        D8[Residual add]
+        D9[RMSNorm]
+        D10[SwiGLU]
+        D11[Residual add]
+
+        D1 --> D2
+        D1 --> D3
+        D3 --> D4
+        D3 --> D5
+        D2 --> D6
+        D4 --> D6
         D6 --> D7
-
-        subgraph Layers [ ]
-            direction LR
-            D8[Residual add] --> D9[RMSNorm] --> D10[SwiGLU] --> D11[Residual add]
-        end
-
-        D1 --> D2 & D3
-        D3 --> D4 & D5
-        D2 & D4 --> D6
         D5 --> D7
-        D7 --> D8
+        D7 --> D8 --> D9 --> D10 --> D11
     end
 ```
-
+Комментарии не пиши. Сделай, чтобы Residual add, RMSNorm, SwiGLU, Residuall add были отдельной горизонтальной группой по стрелочкам внутри соеддиненные
 RoPE angular frequencies:
 
 $$
