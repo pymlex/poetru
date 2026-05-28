@@ -88,6 +88,32 @@ $$
 \mathrm{SwiGLU}(x) = W_2\left(\mathrm{SiLU}(W_1x)\odot W_3x\right).
 $$
 
+### GQA
+
+GQA is used to reduce the number of key and value heads while keeping the number of query heads larger. The model has 8 query heads and 4 KV heads, together with head dimension 80 and latent KV dimension 640. If there are $H_q$ query heads and $H_{kv}$ key-value heads, then each group of query heads shares one key-value head. The group size is
+
+$$
+g = \frac{H_q}{H_{kv}}.
+$$
+
+For token representation $x$, the projections are
+
+$$
+Q = xW_Q,\qquad K = xW_K,\qquad V = xW_V.
+$$
+
+The query tensor is split into $H_q$ heads, while the key and value tensors are split into only $H_{kv}$ heads. Each key-value head is then shared across the corresponding group of query heads:
+
+$$
+\tilde K = \mathrm{repeat}(K, g), \qquad \tilde V = \mathrm{repeat}(V, g).
+$$
+
+The attention output for head $h$ is
+
+$$
+\mathrm{Attn}(Q_h, \tilde K_h, \tilde V_h)=\mathrm{softmax}\!\left(\frac{Q_h \tilde K_h^{\top}}{\sqrt{d_h}}\right)\tilde V_h.
+$$
+
 ## Digital Watermark
 
 Digital watermarking follows the soft green-list construction from [Kirchenbauer et al., 2023](https://arxiv.org/abs/2301.10226). For each decoding step, a pseudo-random subset of vocabulary ids receives a positive logit bias, so generated text carries a detectable statistical signature while preserving fluent sampling.
@@ -319,5 +345,15 @@ The code is under GPL-3.0 license.
   archivePrefix = {arXiv},
   primaryClass  = {cs.CL},
   url           = {https://arxiv.org/abs/2203.15556}
+}
+
+@misc{ainslie2023gqa,
+  title         = {GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints},
+  author        = {Joshua Ainslie and James Lee-Thorp and Michiel de Jong and Yury Zemlyanskiy and Federico Lebr{\'o}n and Sumit Sanghai},
+  year          = {2023},
+  eprint        = {2305.13245},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2305.13245}
 }
 ```
