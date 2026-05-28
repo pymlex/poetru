@@ -38,15 +38,8 @@ Current checkpoint scale is $N = 74{,}899{,}072$.
 Architecture flow diagram:
 
 ```mermaid
-flowchart TB
-    A[Input token ids]
-    B[Embedding]
-    C[Dropout]
-    D[Transformer block x12]
-    E[RMSNorm]
-    F[LM head tied with embedding]
-
-    A --> B --> C --> D --> E --> F
+flowchart LR
+    A[Input token ids] --> B[Embedding] --> C[Dropout] --> D[Transformer block x12] --> E[RMSNorm] --> F[LM head tied with embedding]
 ```
 
 Transformer block:
