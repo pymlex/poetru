@@ -344,6 +344,7 @@ python main.py all --root .
 
 ```bash
 bash scripts/push_github.sh "Describe your change"
+bash scripts/push_results.sh "Update run artifacts"
 bash scripts/push_hub.sh publish
 ```
 
